@@ -13,7 +13,7 @@ from django.conf import settings
 import os
 from datetime import datetime
 
-from ..api.models import PVReport, Deliberation, Candidate
+from api.models import PVReport, Deliberation, Candidate
 
 
 def generate_pv_report(session, created_by, title=None):

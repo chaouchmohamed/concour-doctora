@@ -10,7 +10,7 @@ import {
   Phone,
   MapPin,
   Calendar,
-  IdCard,
+  CreditCard,
   User,
   FileText,
   QrCode,
@@ -201,7 +201,7 @@ const CandidateProfile = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <Input
                     label="National ID"
-                    icon={IdCard}
+                    icon={CreditCard}
                     {...register('national_id', {
                       required: 'National ID is required',
                       pattern: {

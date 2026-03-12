@@ -1,7 +1,7 @@
 """
 Anonymization utilities
 """
-from ..api.models import AnonymousCode, Candidate
+from api.models import AnonymousCode, Candidate
 import random
 import string
 

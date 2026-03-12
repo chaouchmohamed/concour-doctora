@@ -1,23 +1,21 @@
-# Local development settings
 from pathlib import Path
-import os
-
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-# Use SQLite for development
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-
-# Disable MySQL warnings
-import warnings
-warnings.filterwarnings('ignore', category=UserWarning, module='django.db.backends.mysql')
-
-# Simple JWT settings (ensure they're defined)
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': 60,  # minutes
-    'REFRESH_TOKEN_LIFETIME': 1,  # days
-}
+SECRET_KEY = 'django-insecure-dev-key'
+DEBUG = True
+ALLOWED_HOSTS = ['*']
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'rest_framework',
+    'corsheaders',
+    'api',
+    'auth_app',
+]
+DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': BASE_DIR / 'db.sqlite3'}}
+CORS_ALLOW_ALL_ORIGINS = True
+ROOT_URLCONF = 'concour_doctora.urls'
+STATIC_URL = 'static/'

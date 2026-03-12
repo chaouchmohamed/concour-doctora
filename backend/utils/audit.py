@@ -1,7 +1,7 @@
 """
 Audit logging utility
 """
-from ..api.models import AuditLog
+from api.models import AuditLog
 import json
 
 
