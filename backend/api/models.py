@@ -16,7 +16,9 @@ USER_ROLES = [
     ('COORDINATOR', 'Coordinator'),
     ('CORRECTOR', 'Corrector'),
     ('SUPERVISOR', 'Supervisor'),
+    ('JURY_PRESIDENT', 'Jury President'),
     ('JURY_MEMBER', 'Jury Member'),
+    ('ANONYMITY_COMMISSION', 'Anonymity Commission'),
 ]
 
 # Candidate Status

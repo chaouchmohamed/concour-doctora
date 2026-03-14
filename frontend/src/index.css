@@ -1,109 +1,93 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-inter: "Inter", sans-serif;
+
+  --color-primary-accent: #8B7355;
+  --color-surface: #F0EDE7;
+  --color-text-primary: #1A1A1A;
+  --color-bg: #FFFFFF;
+  --color-muted: #6B6B6B;
+  --color-border: #EBEBEB;
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-focus-ring: rgba(139, 115, 85, 0.2);
+
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+
+  --shadow-1: 0 1px 4px rgba(37, 37, 35, 0.06);
+  --shadow-2: 0 6px 20px rgba(37, 37, 35, 0.08);
+}
 
 @layer base {
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
-
   body {
-    @apply bg-white text-text-primary font-sans antialiased;
+    @apply bg-bg text-text-primary font-sans antialiased;
   }
 
   h1 {
-    @apply text-[clamp(2.5rem,6vw,5rem)] font-extrabold leading-tight;
+    @apply text-[32px] leading-[40px] font-bold;
   }
 
   h2 {
-    @apply text-3xl font-bold leading-tight;
+    @apply text-[24px] leading-[32px] font-semibold;
   }
 
   h3 {
-    @apply text-2xl font-semibold leading-snug;
+    @apply text-[20px] leading-[28px] font-semibold;
   }
 
-  /* Scrollbar styling */
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+  p,
+  span,
+  div {
+    @apply text-[16px] leading-[24px];
   }
 
-  ::-webkit-scrollbar-track {
-    @apply bg-surface/30;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    @apply bg-primary-accent/50 rounded-full;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-primary-accent;
+  .text-small {
+    @apply text-[13px] leading-[20px];
   }
 }
 
 @layer components {
-  .card {
-    @apply bg-surface rounded-card shadow-card p-6;
-  }
-
   .btn-primary {
-    @apply bg-primary-accent text-white px-4 py-2 rounded-lg hover:bg-primary-dark transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply min-h-[44px] px-6 py-2 bg-primary-accent text-white rounded-md font-medium shadow-1 transition-all hover:opacity-90 active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-focus-ring disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-secondary {
-    @apply bg-white border border-primary-accent text-primary-accent px-4 py-2 rounded-lg hover:bg-primary-accent/10 transition-colors duration-200 font-medium;
+    @apply min-h-[44px] px-6 py-2 border border-border bg-transparent text-text-primary rounded-md font-medium transition-all hover:bg-black/[0.03] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-focus-ring disabled:opacity-50;
   }
 
-  .btn-danger {
-    @apply bg-error text-white px-4 py-2 rounded-lg hover:bg-error/90 transition-colors duration-200 font-medium;
+  .btn-ghost {
+    @apply min-h-[44px] px-6 py-2 bg-transparent text-text-primary rounded-md font-medium transition-all hover:bg-black/[0.03] active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-focus-ring disabled:opacity-50;
   }
 
-  .input {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-accent focus:border-transparent transition-all duration-200;
+  .input-field {
+    @apply w-full bg-white border border-border rounded-sm p-3 text-text-primary placeholder:text-muted focus:outline-none focus:ring-4 focus:ring-focus-ring transition-all;
   }
 
-  .badge {
-    @apply px-2.5 py-0.5 rounded-full text-xs font-medium;
+  .card {
+    @apply bg-white rounded-md shadow-1 border border-border overflow-hidden;
   }
 
-  .badge-registered {
-    @apply badge bg-status-registered text-text-primary;
-  }
-
-  .badge-present, .badge-admitted {
-    @apply badge bg-status-present text-success;
-  }
-
-  .badge-eliminated, .badge-rejected {
-    @apply badge bg-status-eliminated text-error;
-  }
-
-  .badge-waitlist, .badge-pending {
-    @apply badge bg-status-waitlist text-warning;
-  }
-
-  .badge-draft {
-    @apply badge bg-status-draft text-text-secondary;
-  }
-
-  .badge-active {
-    @apply badge bg-status-active text-info;
-  }
-
-  .badge-locked {
-    @apply badge bg-status-locked text-text-secondary;
+  .card-surface {
+    @apply bg-surface rounded-md shadow-1 border border-border overflow-hidden;
   }
 }
 
-/* PWA offline styles */
-.offline-indicator {
-  @apply fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-warning text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-slide-up;
+/* Custom scrollbar for a cleaner look */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-/* Loading skeleton animation */
-.skeleton {
-  @apply bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 bg-[length:200%_100%] animate-pulse-slow;
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-border rounded-full hover:bg-muted/20 transition-colors;
 }

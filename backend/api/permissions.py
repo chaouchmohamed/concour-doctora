@@ -58,7 +58,27 @@ class IsJuryMember(permissions.BasePermission):
         if not request.user.is_authenticated:
             return False
         role = request.user.profile.role
-        return role in ['ADMIN', 'CFD_HEAD', 'JURY_MEMBER']
+        return role in ['ADMIN', 'CFD_HEAD', 'JURY_PRESIDENT', 'JURY_MEMBER']
+
+
+class IsJuryPresident(permissions.BasePermission):
+    """Jury President access (deliberation, results, PV signing)"""
+    
+    def has_permission(self, request, view):
+        if not request.user.is_authenticated:
+            return False
+        role = request.user.profile.role
+        return role in ['ADMIN', 'CFD_HEAD', 'JURY_PRESIDENT']
+
+
+class IsAnonymityCommission(permissions.BasePermission):
+    """Anonymity Commission access (anonymization module only)"""
+    
+    def has_permission(self, request, view):
+        if not request.user.is_authenticated:
+            return False
+        role = request.user.profile.role
+        return role in ['ADMIN', 'CFD_HEAD', 'ANONYMITY_COMMISSION']
 
 
 class IsOwnerOrCoordinator(permissions.BasePermission):

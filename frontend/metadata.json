@@ -1,0 +1,8 @@
+{
+  "name": "ConcoursDoctor",
+  "description": "Institutional platform for managing doctoral entrance exams, featuring automated candidate import, offline-friendly attendance PWA, double-blind correction, and automated deliberation.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}
