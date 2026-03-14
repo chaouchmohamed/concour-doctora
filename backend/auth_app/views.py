@@ -12,67 +12,41 @@ from django.core.mail import send_mail
 from django.utils import timezone
 from django.conf import settings
 import jwt
-import uuid
-
-from api.models import UserProfile, AuditLog
-from api.serializers import UserSerializer
+from .serializers import LoginSerializer,UserSerializer
+from api.models import UserProfile
 from utils.audit import log_action
-
-
+from rest_framework.authtoken.models import Token
+#logn view is updateeeeeeeeed
 @api_view(['POST'])
 @permission_classes([AllowAny])
-def login_view(request):
-    """User login - returns JWT tokens"""
-    username = request.data.get('username')
-    password = request.data.get('password')
+def login_api_view(request):
+
+    serializer = LoginSerializer(data=request.data)
     
-    if not username or not password:
-        return Response(
-            {'error': 'Please provide both username and password'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    
-    # Authenticate user
-    user = authenticate(username=username, password=password)
-    
-    if user is not None:
-        # Check if user is active
+    if serializer.is_valid():
+        user = serializer.validated_data 
+        
         if not user.is_active:
             return Response(
-                {'error': 'Account is disabled'},
+                {'error': 'Ce compte est désactivé.'},
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        # Generate JWT tokens
-        refresh = RefreshToken.for_user(user)
-        
-        # Update last login
         user.last_login = timezone.now()
         user.save(update_fields=['last_login'])
-        
-        # Get user data
-        serializer = UserSerializer(user)
-        
-        # Log action
-        log_action(
-            user=user,
-            action='LOGIN',
-            object_type='Auth',
-            details={'username': username},
-            request=request
-        )
-        
-        return Response({
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-            'user': serializer.data
-        })
-    else:
-        return Response(
-            {'error': 'Invalid credentials'},
-            status=status.HTTP_401_UNAUTHORIZED
-        )
 
+        must_change = user.profile.must_change_password if hasattr(user, 'profile') else False
+
+        refresh = RefreshToken.for_user(user)
+
+        return Response({
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'must_change_password': must_change,
+        }, status=status.HTTP_200_OK)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+# login view is updateeeeeeeeed
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -98,83 +72,6 @@ def logout_view(request):
             {'error': str(e)},
             status=status.HTTP_400_BAD_REQUEST
         )
-
-
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def register_view(request):
-    """Register new user (admin only in production)"""
-    # Check if registration is allowed
-    if not settings.DEBUG:
-        # In production, only admin can create users
-        return Response(
-            {'error': 'Registration is disabled. Contact administrator.'},
-            status=status.HTTP_403_FORBIDDEN
-        )
-    
-    email = request.data.get('email')
-    password = request.data.get('password')
-    first_name = request.data.get('first_name', '')
-    last_name = request.data.get('last_name', '')
-    role = request.data.get('role', 'CORRECTOR')
-    
-    if not email or not password:
-        return Response(
-            {'error': 'Email and password are required'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    
-    # Check if user exists
-    if User.objects.filter(email=email).exists():
-        return Response(
-            {'error': 'User with this email already exists'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    
-    # Generate username from email
-    username = email.split('@')[0]
-    base_username = username
-    counter = 1
-    while User.objects.filter(username=username).exists():
-        username = f"{base_username}{counter}"
-        counter += 1
-    
-    # Create user
-    user = User.objects.create_user(
-        username=username,
-        email=email,
-        password=password,
-        first_name=first_name,
-        last_name=last_name,
-        is_active=True
-    )
-    
-    # Create profile
-    UserProfile.objects.create(
-        user=user,
-        role=role,
-        phone=request.data.get('phone', '')
-    )
-    
-    # Generate tokens
-    refresh = RefreshToken.for_user(user)
-    
-    # Log action
-    log_action(
-        user=user,
-        action='CREATE',
-        object_type='User',
-        object_id=user.id,
-        details={'email': email, 'role': role},
-        request=request
-    )
-    
-    serializer = UserSerializer(user)
-    return Response({
-        'refresh': str(refresh),
-        'access': str(refresh.access_token),
-        'user': serializer.data
-    }, status=status.HTTP_201_CREATED)
 
 
 @api_view(['POST'])

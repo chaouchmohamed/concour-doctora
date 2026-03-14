@@ -1,0 +1,8 @@
+{
+    "python.defaultInterpreterPath": "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/bin/python",
+    "terminal.integrated.env.linux": {
+        "VIRTUAL_ENV": "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM",
+        "PATH": "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/bin:${env:PATH}"
+    },
+    "terminal.integrated.activateEnvironment": true
+}

@@ -34,10 +34,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     
     # Third party apps
-    'rest_framework',
     'rest_framework_simplejwt',
-    'corsheaders',
     'django_filters',
+    'rest_framework',
+    'corsheaders',
     'drf_yasg',
     'django_cleanup.apps.CleanupConfig',
     'import_export',
