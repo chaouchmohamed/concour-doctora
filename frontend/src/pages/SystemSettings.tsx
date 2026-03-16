@@ -1,240 +1,622 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
-    Settings,
-    Save,
-    RotateCcw,
-    Bell,
-    Shield,
-    Globe,
-    Palette,
-    Mail,
-    CheckCircle2,
-    AlertCircle
-} from 'lucide-react';
-import { AppShell } from '../components/AppShell';
-import { Card, Badge, Button, Input } from '../components/UI';
-import { cn } from '../constants';
-import { motion } from 'motion/react';
+  Settings,
+  Save,
+  RotateCcw,
+  Bell,
+  Shield,
+  Globe,
+  Mail,
+  CheckCircle2,
+  AlertCircle,
+  ChevronDown,
+  Lock,
+  Eye,
+  EyeOff,
+} from "lucide-react";
+import { AppShell } from "../components/AppShell";
+import { Card } from "../components/UI";
+import { cn } from "../constants";
+import { motion, AnimatePresence } from "motion/react";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface GeneralSettings {
+  institutionName: string;
+  department: string;
+  academicYear: string;
+  contactEmail: string;
+  timezone: string;
+}
+
+interface ExamSettings {
+  maxScore: number;
+  passThreshold: number;
+  discrepancyThreshold: number;
+  finalGradeRule: string;
+  examDuration: string;
+}
+
+interface NotifSettings {
+  candidateImport: boolean;
+  discrepancyDetected: boolean;
+  deliberationClosed: boolean;
+  scanErrors: boolean;
+  userAccountChanges: boolean;
+  smtpHost: string;
+  smtpPort: string;
+  senderEmail: string;
+  useTls: boolean;
+}
+
+interface SecuritySettings {
+  twoFactor: boolean;
+  sessionTimeout: boolean;
+  ipWhitelist: boolean;
+  auditEncryption: boolean;
+  passwordPolicy: string;
+}
+
+// ─── Defaults ─────────────────────────────────────────────────────────────────
+
+const defaultGeneral: GeneralSettings = {
+  institutionName: "École Supérieure en Informatique — Sidi Bel Abbès",
+  department: "Doctoral Training Committee (CFD)",
+  academicYear: "2025-2026",
+  contactEmail: "admin@esi-sba.dz",
+  timezone: "Africa/Algiers",
+};
+
+const defaultExam: ExamSettings = {
+  maxScore: 20,
+  passThreshold: 10,
+  discrepancyThreshold: 3,
+  finalGradeRule: "AVERAGE",
+  examDuration: "3 hours",
+};
+
+const defaultNotif: NotifSettings = {
+  candidateImport: true,
+  discrepancyDetected: true,
+  deliberationClosed: false,
+  scanErrors: true,
+  userAccountChanges: false,
+  smtpHost: "smtp.esi-sba.dz",
+  smtpPort: "587",
+  senderEmail: "noreply@esi-sba.dz",
+  useTls: true,
+};
+
+const defaultSecurity: SecuritySettings = {
+  twoFactor: false,
+  sessionTimeout: true,
+  ipWhitelist: false,
+  auditEncryption: true,
+  passwordPolicy: "STRONG",
+};
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+const FieldLabel = ({ children }: { children: React.ReactNode }) => (
+  <p className="text-[10px] font-bold uppercase tracking-wider text-muted mb-1.5">
+    {children}
+  </p>
+);
+
+const TextInput = ({
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  type?: string;
+}) => (
+  <input
+    type={type}
+    value={value}
+    onChange={(e) => onChange(e.target.value)}
+    placeholder={placeholder}
+    className="w-full border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-accent/20 focus:border-primary-accent transition-colors"
+  />
+);
+
+const SelectInput = ({
+  value,
+  onChange,
+  children,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  children: React.ReactNode;
+}) => (
+  <div className="relative">
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full appearance-none border border-border rounded-xl px-3 py-2.5 text-sm bg-white pr-8 focus:outline-none focus:ring-2 focus:ring-primary-accent/20 focus:border-primary-accent"
+    >
+      {children}
+    </select>
+    <ChevronDown
+      size={14}
+      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted pointer-events-none"
+    />
+  </div>
+);
+
+const Toggle = ({
+  checked,
+  onChange,
+  label,
+  desc,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  label: string;
+  desc: string;
+}) => (
+  <div className="flex items-center justify-between gap-4 py-3 border-b border-border/50 last:border-0">
+    <div>
+      <p className="text-xs font-semibold text-text-primary">{label}</p>
+      <p className="text-[11px] text-muted mt-0.5">{desc}</p>
+    </div>
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      className={cn(
+        "relative shrink-0 w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none",
+        checked ? "bg-primary-accent" : "bg-gray-200 border border-gray-300",
+      )}
+    >
+      <span
+        className={cn(
+          "absolute top-[3px] w-[18px] h-[18px] bg-white rounded-full shadow transition-transform duration-200",
+          checked ? "translate-x-[-20px]" : "translate-x-[2px] top-[2px]",
+        )}
+      />
+    </button>
+  </div>
+);
+
+const SliderField = ({
+  label,
+  value,
+  onChange,
+  min,
+  max,
+  step,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  min: number;
+  max: number;
+  step: number;
+}) => (
+  <div>
+    <FieldLabel>{label}</FieldLabel>
+    <div className="flex items-center gap-3">
+      <input
+        type="range"
+        className="flex-1 accent-primary-accent"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(+e.target.value)}
+      />
+      <span className="text-sm font-bold text-primary-accent bg-primary-accent/5 border border-primary-accent/20 rounded-lg px-2.5 py-1 w-14 text-center">
+        {value.toFixed(1)}
+      </span>
+    </div>
+  </div>
+);
+
+// ─── Tabs ─────────────────────────────────────────────────────────────────────
 
 const tabs = [
-    { id: 'general', label: 'General', icon: Globe },
-    { id: 'exams', label: 'Exam Defaults', icon: Settings },
-    { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'security', label: 'Security', icon: Shield },
+  { id: "general", label: "General", Icon: Globe },
+  { id: "exams", label: "Exam Defaults", Icon: Settings },
+  { id: "notifications", label: "Notifications", Icon: Bell },
+  { id: "security", label: "Security", Icon: Shield },
 ];
 
+// ─── Main Page ────────────────────────────────────────────────────────────────
+
 export const SystemSettingsPage = () => {
-    const [activeTab, setActiveTab] = useState('general');
-    const [saved, setSaved] = useState(false);
+  const [activeTab, setActiveTab] = useState("general");
+  const [saved, setSaved] = useState(false);
 
-    const handleSave = () => {
-        setSaved(true);
-        setTimeout(() => setSaved(false), 3000);
-    };
+  const [general, setGeneral] = useState<GeneralSettings>(defaultGeneral);
+  const [exam, setExam] = useState<ExamSettings>(defaultExam);
+  const [notif, setNotif] = useState<NotifSettings>(defaultNotif);
+  const [security, setSecurity] = useState<SecuritySettings>(defaultSecurity);
+  const [showSmtpPass, setShowSmtpPass] = useState(false);
 
-    return (
-        <AppShell title="System Settings">
-            <div className="space-y-8">
-                {/* Tabs */}
-                <div className="flex items-center gap-1 border-b border-border overflow-x-auto">
-                    {tabs.map((tab) => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={cn(
-                                "flex items-center gap-2 px-5 py-3 text-small font-medium transition-all border-b-2 whitespace-nowrap",
-                                activeTab === tab.id
-                                    ? "border-primary-accent text-primary-accent"
-                                    : "border-transparent text-muted hover:text-text-primary"
-                            )}
-                        >
-                            <tab.icon size={18} /> {tab.label}
-                        </button>
-                    ))}
+  const handleSave = () => {
+    setSaved(true);
+    setTimeout(() => setSaved(false), 3000);
+  };
+
+  const handleReset = () => {
+    setGeneral(defaultGeneral);
+    setExam(defaultExam);
+    setNotif(defaultNotif);
+    setSecurity(defaultSecurity);
+  };
+
+  return (
+    <AppShell title="System Settings">
+      {/* Fixed height layout */}
+      <div className="flex flex-col gap-0 h-full">
+        {/* Tabs */}
+        <div className="flex items-center gap-0 border-b border-border shrink-0 bg-white">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                "flex items-center gap-2 px-5 py-3 text-xs font-semibold transition-all border-b-2 whitespace-nowrap",
+                activeTab === tab.id
+                  ? "border-primary-accent text-primary-accent"
+                  : "border-transparent text-muted hover:text-text-primary hover:bg-black/[0.02]",
+              )}
+            >
+              <tab.Icon size={15} /> {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Scrollable content area */}
+        <div className="flex-1 overflow-y-auto py-5 px-0.5">
+          <div className="max-w-2xl space-y-4">
+            {/* ── General ── */}
+            {activeTab === "general" && (
+              <Card className="p-5 space-y-4">
+                <h3 className="text-sm font-bold flex items-center gap-2 pb-2 border-b border-border">
+                  <Globe size={16} className="text-primary-accent" />{" "}
+                  Institution Settings
+                </h3>
+                <div>
+                  <FieldLabel>Institution Name</FieldLabel>
+                  <TextInput
+                    value={general.institutionName}
+                    onChange={(v) =>
+                      setGeneral((p) => ({ ...p, institutionName: v }))
+                    }
+                  />
                 </div>
-
-                {/* General Tab */}
-                {activeTab === 'general' && (
-                    <div className="space-y-6 max-w-2xl">
-                        <Card className="p-6 space-y-6">
-                            <h3 className="text-lg font-bold flex items-center gap-2">
-                                <Globe size={20} className="text-primary-accent" /> Institution Settings
-                            </h3>
-                            <Input label="Institution Name" defaultValue="University of Algiers 1" />
-                            <Input label="Department" defaultValue="Faculty of Exact Sciences" />
-                            <Input label="Academic Year" defaultValue="2025-2026" />
-                            <Input label="Contact Email" defaultValue="admin@univ-alger1.dz" type="email" />
-                            <div className="space-y-1.5">
-                                <label className="text-small font-medium text-text-primary block">Timezone</label>
-                                <select className="input-field appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236b7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.5rem_center] bg-no-repeat">
-                                    <option>Africa/Algiers (UTC+01:00)</option>
-                                    <option>Europe/Paris (UTC+01:00)</option>
-                                    <option>UTC</option>
-                                </select>
-                            </div>
-                        </Card>
-                    </div>
-                )}
-
-                {/* Exam Defaults Tab */}
-                {activeTab === 'exams' && (
-                    <div className="space-y-6 max-w-2xl">
-                        <Card className="p-6 space-y-6">
-                            <h3 className="text-lg font-bold flex items-center gap-2">
-                                <Settings size={20} className="text-primary-accent" /> Exam Configuration Defaults
-                            </h3>
-                            <div className="space-y-2">
-                                <label className="text-small font-bold text-text-primary block">Default Max Score</label>
-                                <input type="number" className="input-field" defaultValue="20" />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-small font-bold text-text-primary block">Pass Threshold</label>
-                                <div className="flex items-center gap-3">
-                                    <input type="range" className="flex-1 accent-primary-accent" min="5" max="15" step="0.5" defaultValue="10" />
-                                    <span className="w-14 text-center font-bold text-primary-accent bg-primary-accent/5 rounded px-2 py-1">10.0</span>
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-small font-bold text-text-primary block">Discrepancy Threshold (pts)</label>
-                                <div className="flex items-center gap-3">
-                                    <input type="range" className="flex-1 accent-primary-accent" min="1" max="6" step="0.25" defaultValue="3" />
-                                    <span className="w-14 text-center font-bold text-primary-accent bg-primary-accent/5 rounded px-2 py-1">3.0</span>
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-small font-bold text-text-primary block">Final Grade Rule</label>
-                                <select className="input-field appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236b7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.5rem_center] bg-no-repeat">
-                                    <option value="AVERAGE">Average of all correctors</option>
-                                    <option value="MEDIAN">Median score</option>
-                                    <option value="THIRD_CORRECTOR">3rd corrector only</option>
-                                </select>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-small font-bold text-text-primary block">Default Exam Duration</label>
-                                <select className="input-field appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236b7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.5rem_center] bg-no-repeat">
-                                    <option>2 hours</option>
-                                    <option>3 hours</option>
-                                    <option>4 hours</option>
-                                </select>
-                            </div>
-                        </Card>
-                    </div>
-                )}
-
-                {/* Notifications Tab */}
-                {activeTab === 'notifications' && (
-                    <div className="space-y-6 max-w-2xl">
-                        <Card className="p-6 space-y-6">
-                            <h3 className="text-lg font-bold flex items-center gap-2">
-                                <Bell size={20} className="text-primary-accent" /> Email Notifications
-                            </h3>
-                            {[
-                                { label: 'Candidate import completed', desc: 'Notify admins when a CSV import finishes', checked: true },
-                                { label: 'Discrepancy detected', desc: 'Alert coordinators of new grade discrepancies', checked: true },
-                                { label: 'Deliberation closed', desc: 'Notify all jury members when deliberation is finalized', checked: false },
-                                { label: 'Scan upload errors', desc: 'Alert when OMR scan processing fails', checked: true },
-                                { label: 'User account changes', desc: 'Notify admins of role changes and new invitations', checked: false },
-                            ].map((item, i) => (
-                                <label key={i} className="flex items-start justify-between gap-4 cursor-pointer group p-3 rounded-md hover:bg-black/[0.01] transition-colors">
-                                    <div>
-                                        <p className="text-small font-bold text-text-primary group-hover:text-primary-accent transition-colors">{item.label}</p>
-                                        <p className="text-[12px] text-muted">{item.desc}</p>
-                                    </div>
-                                    <div className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
-                                        <input type="checkbox" defaultChecked={item.checked} className="sr-only peer" />
-                                        <div className="w-11 h-6 bg-border rounded-full peer peer-checked:bg-primary-accent peer-focus:ring-4 peer-focus:ring-focus-ring transition-all after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
-                                    </div>
-                                </label>
-                            ))}
-                        </Card>
-
-                        <Card className="p-6 space-y-4">
-                            <h3 className="text-lg font-bold flex items-center gap-2">
-                                <Mail size={20} className="text-primary-accent" /> SMTP Configuration
-                            </h3>
-                            <div className="grid grid-cols-2 gap-4">
-                                <Input label="SMTP Host" defaultValue="smtp.univ-alger1.dz" />
-                                <Input label="SMTP Port" defaultValue="587" type="number" />
-                            </div>
-                            <Input label="Sender Email" defaultValue="noreply@univ-alger1.dz" />
-                            <div className="flex items-center gap-2">
-                                <input type="checkbox" defaultChecked className="w-4 h-4 rounded border-border text-primary-accent" />
-                                <span className="text-small text-muted">Use TLS encryption</span>
-                            </div>
-                        </Card>
-                    </div>
-                )}
-
-                {/* Security Tab */}
-                {activeTab === 'security' && (
-                    <div className="space-y-6 max-w-2xl">
-                        <Card className="p-6 space-y-6">
-                            <h3 className="text-lg font-bold flex items-center gap-2">
-                                <Shield size={20} className="text-primary-accent" /> Security & Access
-                            </h3>
-                            <div className="space-y-4">
-                                {[
-                                    { label: 'Two-Factor Authentication', desc: 'Require 2FA for all admin and coordinator accounts', checked: false },
-                                    { label: 'Session Timeout', desc: 'Auto-logout after 30 minutes of inactivity', checked: true },
-                                    { label: 'IP Whitelist', desc: 'Restrict access to approved IP ranges only', checked: false },
-                                    { label: 'Audit Log Encryption', desc: 'Encrypt all audit trail entries at rest', checked: true },
-                                ].map((item, i) => (
-                                    <label key={i} className="flex items-start justify-between gap-4 cursor-pointer group p-3 rounded-md hover:bg-black/[0.01] transition-colors">
-                                        <div>
-                                            <p className="text-small font-bold text-text-primary">{item.label}</p>
-                                            <p className="text-[12px] text-muted">{item.desc}</p>
-                                        </div>
-                                        <div className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
-                                            <input type="checkbox" defaultChecked={item.checked} className="sr-only peer" />
-                                            <div className="w-11 h-6 bg-border rounded-full peer peer-checked:bg-primary-accent peer-focus:ring-4 peer-focus:ring-focus-ring transition-all after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
-                                        </div>
-                                    </label>
-                                ))}
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-small font-bold text-text-primary block">Password Policy</label>
-                                <select className="input-field appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2020%2020%22%3E%3Cpath%20stroke%3D%22%236b7280%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%20d%3D%22m6%208%204%204%204-4%22%2F%3E%3C%2Fsvg%3E')] bg-[length:1.25rem_1.25rem] bg-[right_0.5rem_center] bg-no-repeat">
-                                    <option>Strong (8+ chars, uppercase, number, special)</option>
-                                    <option>Standard (8+ chars, uppercase, number)</option>
-                                    <option>Basic (6+ characters)</option>
-                                </select>
-                            </div>
-                        </Card>
-
-                        <div className="p-4 bg-danger/5 border border-danger/20 rounded-md flex gap-3">
-                            <AlertCircle size={20} className="text-danger shrink-0" />
-                            <p className="text-[12px] text-muted">
-                                Changing security settings may require all active users to re-authenticate. Plan changes during off-hours.
-                            </p>
-                        </div>
-                    </div>
-                )}
-
-                {/* Save Bar */}
-                <div className="flex items-center justify-between p-4 bg-white border border-border rounded-md shadow-1 sticky bottom-4">
-                    <div className="flex items-center gap-3">
-                        {saved && (
-                            <motion.div
-                                initial={{ opacity: 0, x: -10 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                className="flex items-center gap-2 text-success"
-                            >
-                                <CheckCircle2 size={18} />
-                                <span className="text-small font-bold">Settings saved successfully!</span>
-                            </motion.div>
-                        )}
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <Button variant="secondary" className="gap-2">
-                            <RotateCcw size={16} /> Reset
-                        </Button>
-                        <Button className="gap-2" onClick={handleSave}>
-                            <Save size={16} /> Save Changes
-                        </Button>
-                    </div>
+                <div>
+                  <FieldLabel>Department</FieldLabel>
+                  <TextInput
+                    value={general.department}
+                    onChange={(v) =>
+                      setGeneral((p) => ({ ...p, department: v }))
+                    }
+                  />
                 </div>
-            </div>
-        </AppShell>
-    );
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <FieldLabel>Academic Year</FieldLabel>
+                    <TextInput
+                      value={general.academicYear}
+                      onChange={(v) =>
+                        setGeneral((p) => ({ ...p, academicYear: v }))
+                      }
+                      placeholder="2025-2026"
+                    />
+                  </div>
+                  <div>
+                    <FieldLabel>Contact Email</FieldLabel>
+                    <TextInput
+                      type="email"
+                      value={general.contactEmail}
+                      onChange={(v) =>
+                        setGeneral((p) => ({ ...p, contactEmail: v }))
+                      }
+                    />
+                  </div>
+                </div>
+                <div>
+                  <FieldLabel>Timezone</FieldLabel>
+                  <SelectInput
+                    value={general.timezone}
+                    onChange={(v) => setGeneral((p) => ({ ...p, timezone: v }))}
+                  >
+                    <option value="Africa/Algiers">
+                      Africa/Algiers (UTC+01:00)
+                    </option>
+                    <option value="Europe/Paris">
+                      Europe/Paris (UTC+01:00)
+                    </option>
+                    <option value="UTC">UTC</option>
+                  </SelectInput>
+                </div>
+              </Card>
+            )}
+
+            {/* ── Exam Defaults ── */}
+            {activeTab === "exams" && (
+              <Card className="p-5 space-y-4">
+                <h3 className="text-sm font-bold flex items-center gap-2 pb-2 border-b border-border">
+                  <Settings size={16} className="text-primary-accent" /> Exam
+                  Configuration Defaults
+                </h3>
+                <div>
+                  <FieldLabel>Default Max Score</FieldLabel>
+                  <input
+                    type="number"
+                    value={exam.maxScore}
+                    onChange={(e) =>
+                      setExam((p) => ({ ...p, maxScore: +e.target.value }))
+                    }
+                    className="w-full border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-accent/20 focus:border-primary-accent"
+                  />
+                </div>
+                <SliderField
+                  label="Pass Threshold"
+                  value={exam.passThreshold}
+                  onChange={(v) => setExam((p) => ({ ...p, passThreshold: v }))}
+                  min={5}
+                  max={15}
+                  step={0.5}
+                />
+                <SliderField
+                  label="Discrepancy Threshold (pts)"
+                  value={exam.discrepancyThreshold}
+                  onChange={(v) =>
+                    setExam((p) => ({ ...p, discrepancyThreshold: v }))
+                  }
+                  min={1}
+                  max={6}
+                  step={0.25}
+                />
+                <div>
+                  <FieldLabel>Final Grade Rule</FieldLabel>
+                  <SelectInput
+                    value={exam.finalGradeRule}
+                    onChange={(v) =>
+                      setExam((p) => ({ ...p, finalGradeRule: v }))
+                    }
+                  >
+                    <option value="AVERAGE">Average of all correctors</option>
+                    <option value="MEDIAN">Median score</option>
+                    <option value="THIRD_CORRECTOR">3rd corrector only</option>
+                  </SelectInput>
+                </div>
+                <div>
+                  <FieldLabel>Default Exam Duration</FieldLabel>
+                  <SelectInput
+                    value={exam.examDuration}
+                    onChange={(v) =>
+                      setExam((p) => ({ ...p, examDuration: v }))
+                    }
+                  >
+                    <option>2 hours</option>
+                    <option>3 hours</option>
+                    <option>4 hours</option>
+                  </SelectInput>
+                </div>
+              </Card>
+            )}
+
+            {/* ── Notifications ── */}
+            {activeTab === "notifications" && (
+              <>
+                <Card className="p-5">
+                  <h3 className="text-sm font-bold flex items-center gap-2 pb-3 mb-1 border-b border-border">
+                    <Bell size={16} className="text-primary-accent" /> Email
+                    Notifications
+                  </h3>
+                  <Toggle
+                    label="Candidate import completed"
+                    desc="Notify admins when a CSV import finishes"
+                    checked={notif.candidateImport}
+                    onChange={(v) =>
+                      setNotif((p) => ({ ...p, candidateImport: v }))
+                    }
+                  />
+                  <Toggle
+                    label="Discrepancy detected"
+                    desc="Alert coordinators of new grade discrepancies"
+                    checked={notif.discrepancyDetected}
+                    onChange={(v) =>
+                      setNotif((p) => ({ ...p, discrepancyDetected: v }))
+                    }
+                  />
+                  <Toggle
+                    label="Deliberation closed"
+                    desc="Notify all jury members when deliberation is finalized"
+                    checked={notif.deliberationClosed}
+                    onChange={(v) =>
+                      setNotif((p) => ({ ...p, deliberationClosed: v }))
+                    }
+                  />
+                  <Toggle
+                    label="Scan upload errors"
+                    desc="Alert when OMR scan processing fails"
+                    checked={notif.scanErrors}
+                    onChange={(v) => setNotif((p) => ({ ...p, scanErrors: v }))}
+                  />
+                  <Toggle
+                    label="User account changes"
+                    desc="Notify admins of role changes and new invitations"
+                    checked={notif.userAccountChanges}
+                    onChange={(v) =>
+                      setNotif((p) => ({ ...p, userAccountChanges: v }))
+                    }
+                  />
+                </Card>
+
+                <Card className="p-5 space-y-4">
+                  <h3 className="text-sm font-bold flex items-center gap-2 pb-2 border-b border-border">
+                    <Mail size={16} className="text-primary-accent" /> SMTP
+                    Configuration
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <FieldLabel>SMTP Host</FieldLabel>
+                      <TextInput
+                        value={notif.smtpHost}
+                        onChange={(v) =>
+                          setNotif((p) => ({ ...p, smtpHost: v }))
+                        }
+                      />
+                    </div>
+                    <div>
+                      <FieldLabel>SMTP Port</FieldLabel>
+                      <TextInput
+                        type="number"
+                        value={notif.smtpPort}
+                        onChange={(v) =>
+                          setNotif((p) => ({ ...p, smtpPort: v }))
+                        }
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <FieldLabel>Sender Email</FieldLabel>
+                    <TextInput
+                      type="email"
+                      value={notif.senderEmail}
+                      onChange={(v) =>
+                        setNotif((p) => ({ ...p, senderEmail: v }))
+                      }
+                    />
+                  </div>
+                  <Toggle
+                    label="Use TLS encryption"
+                    desc="Recommended — required by SRS (CD-NFR-SEC-01)"
+                    checked={notif.useTls}
+                    onChange={(v) => setNotif((p) => ({ ...p, useTls: v }))}
+                  />
+                </Card>
+              </>
+            )}
+
+            {/* ── Security ── */}
+            {activeTab === "security" && (
+              <>
+                <Card className="p-5">
+                  <h3 className="text-sm font-bold flex items-center gap-2 pb-3 mb-1 border-b border-border">
+                    <Shield size={16} className="text-primary-accent" />{" "}
+                    Security & Access
+                  </h3>
+                  <Toggle
+                    label="Two-Factor Authentication"
+                    desc="Require 2FA for all admin and coordinator accounts"
+                    checked={security.twoFactor}
+                    onChange={(v) =>
+                      setSecurity((p) => ({ ...p, twoFactor: v }))
+                    }
+                  />
+                  <Toggle
+                    label="Session Timeout"
+                    desc="Auto-logout after 8 hours of inactivity (JWT expiry)"
+                    checked={security.sessionTimeout}
+                    onChange={(v) =>
+                      setSecurity((p) => ({ ...p, sessionTimeout: v }))
+                    }
+                  />
+                  <Toggle
+                    label="IP Whitelist"
+                    desc="Restrict access to approved IP ranges only"
+                    checked={security.ipWhitelist}
+                    onChange={(v) =>
+                      setSecurity((p) => ({ ...p, ipWhitelist: v }))
+                    }
+                  />
+                  <Toggle
+                    label="Audit Log Encryption"
+                    desc="Encrypt all audit trail entries at rest"
+                    checked={security.auditEncryption}
+                    onChange={(v) =>
+                      setSecurity((p) => ({ ...p, auditEncryption: v }))
+                    }
+                  />
+                </Card>
+
+                <Card className="p-5 space-y-3">
+                  <h3 className="text-sm font-bold flex items-center gap-2 pb-2 border-b border-border">
+                    <Lock size={16} className="text-primary-accent" /> Password
+                    Policy
+                  </h3>
+                  <p className="text-[11px] text-muted">
+                    Passwords are hashed with bcrypt cost factor ≥ 12
+                    (CD-NFR-SEC-02).
+                  </p>
+                  <SelectInput
+                    value={security.passwordPolicy}
+                    onChange={(v) =>
+                      setSecurity((p) => ({ ...p, passwordPolicy: v }))
+                    }
+                  >
+                    <option value="STRONG">
+                      Strong — 8+ chars, uppercase, number, special
+                    </option>
+                    <option value="STANDARD">
+                      Standard — 8+ chars, uppercase, number
+                    </option>
+                    <option value="BASIC">Basic — 6+ characters</option>
+                  </SelectInput>
+                </Card>
+
+                <div className="flex gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                  <AlertCircle
+                    size={15}
+                    className="text-red-500 shrink-0 mt-0.5"
+                  />
+                  <p className="text-[11px] text-red-700 leading-relaxed">
+                    Changing security settings may require all active users to
+                    re-authenticate. Plan changes during off-hours.
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Save bar — fixed at bottom of the layout, not sticky over content */}
+        <div className="shrink-0 border-t border-border bg-white px-4 py-3 flex items-center justify-between">
+          <AnimatePresence>
+            {saved && (
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                className="flex items-center gap-2 text-emerald-600"
+              >
+                <CheckCircle2 size={15} />
+                <span className="text-xs font-bold">
+                  Settings saved successfully!
+                </span>
+              </motion.div>
+            )}
+            {!saved && <span />}
+          </AnimatePresence>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleReset}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border text-xs font-semibold text-text-primary hover:bg-black/[0.03] transition-colors"
+            >
+              <RotateCcw size={13} /> Reset
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary-accent text-white text-xs font-bold hover:opacity-90 transition-opacity"
+            >
+              <Save size={13} /> Save Changes
+            </button>
+          </div>
+        </div>
+      </div>
+    </AppShell>
+  );
 };
