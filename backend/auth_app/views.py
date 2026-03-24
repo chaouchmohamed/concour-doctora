@@ -12,67 +12,59 @@ from django.core.mail import send_mail
 from django.utils import timezone
 from django.conf import settings
 import jwt
-import uuid
-
-from api.models import UserProfile, AuditLog
-from api.serializers import UserSerializer
+from .serializers import ForcePasswordChangeSerializer, LoginSerializer,UserSerializer
+#from utils.audit import log_action
+from rest_framework.authtoken.models import Token
+#logn view is updateeeeeeeeed
 from utils.audit import log_action
+from .serializers import LoginSerializer
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login_view(request):
-    """User login - returns JWT tokens"""
-    username = request.data.get('username')
-    password = request.data.get('password')
+
+    serializer = LoginSerializer(data=request.data)
     
-    if not username or not password:
-        return Response(
-            {'error': 'Please provide both username and password'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    
-    # Authenticate user
-    user = authenticate(username=username, password=password)
-    
-    if user is not None:
-        # Check if user is active
+    if serializer.is_valid():
+        user = serializer.validated_data 
+        
         if not user.is_active:
             return Response(
-                {'error': 'Account is disabled'},
+                {'error': 'Ce compte est désactivé.'},
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        # Generate JWT tokens
-        refresh = RefreshToken.for_user(user)
-        
-        # Update last login
+        # Mise à jour de la date de dernière connexion
         user.last_login = timezone.now()
         user.save(update_fields=['last_login'])
-        
-        # Get user data
-        serializer = UserSerializer(user)
-        
-        # Log action
+
+        must_change = user.profile.must_change_password if hasattr(user, 'profile') else False
+
+        # Génération des tokens JWT
+        refresh = RefreshToken.for_user(user)
+
+        # On enregistre l'action juste avant de renvoyer la réponse au client
         log_action(
             user=user,
             action='LOGIN',
-            object_type='Auth',
-            details={'username': username},
+            object_type='User',
+            object_id=user.id,
+            details={'role': user.profile.role if hasattr(user, 'profile') else 'UNKNOWN'},
             request=request
         )
-        
-        return Response({
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-            'user': serializer.data
-        })
-    else:
-        return Response(
-            {'error': 'Invalid credentials'},
-            status=status.HTTP_401_UNAUTHORIZED
-        )
 
+        return Response({
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'must_change_password': must_change,
+        }, status=status.HTTP_200_OK)
+
+    # Si les identifiants sont faux, on renvoie les erreurs du serializer
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+# login view is updateeeeeeeeed
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -80,125 +72,31 @@ def logout_view(request):
     """User logout - blacklist refresh token"""
     try:
         refresh_token = request.data.get('refresh')
+        token_blacklisted = False
+        
         if refresh_token:
             token = RefreshToken(refresh_token)
-            token.blacklist()
+            token.blacklist()  # Invalide le token pour qu'il ne soit plus utilisable
+            token_blacklisted = True
         
-        # Log action
+        # On enregistre la déconnexion avec succès
         log_action(
             user=request.user,
             action='LOGOUT',
             object_type='Auth',
+            details={'token_blacklisted': token_blacklisted},
             request=request
         )
         
-        return Response({'success': 'Logged out successfully'})
+        return Response({'success': 'Logged out successfully'}, status=status.HTTP_200_OK)
+        
     except Exception as e:
+        # Si le token est invalide ou expiré, on atterrit ici
         return Response(
-            {'error': str(e)},
+            {'error': 'Invalid token or token already blacklisted.', 'details': str(e)},
             status=status.HTTP_400_BAD_REQUEST
         )
 
-
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def register_view(request):
-    """Register new user (admin only in production)"""
-    # Check if registration is allowed
-    if not settings.DEBUG:
-        # In production, only admin can create users
-        return Response(
-            {'error': 'Registration is disabled. Contact administrator.'},
-            status=status.HTTP_403_FORBIDDEN
-        )
-    
-    email = request.data.get('email')
-    password = request.data.get('password')
-    first_name = request.data.get('first_name', '')
-    last_name = request.data.get('last_name', '')
-    role = request.data.get('role', 'CORRECTOR')
-    
-    if not email or not password:
-        return Response(
-            {'error': 'Email and password are required'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    
-    # Check if user exists
-    if User.objects.filter(email=email).exists():
-        return Response(
-            {'error': 'User with this email already exists'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    
-    # Generate username from email
-    username = email.split('@')[0]
-    base_username = username
-    counter = 1
-    while User.objects.filter(username=username).exists():
-        username = f"{base_username}{counter}"
-        counter += 1
-    
-    # Create user
-    user = User.objects.create_user(
-        username=username,
-        email=email,
-        password=password,
-        first_name=first_name,
-        last_name=last_name,
-        is_active=True
-    )
-    
-    # Create profile
-    UserProfile.objects.create(
-        user=user,
-        role=role,
-        phone=request.data.get('phone', '')
-    )
-    
-    # Generate tokens
-    refresh = RefreshToken.for_user(user)
-    
-    # Log action
-    log_action(
-        user=user,
-        action='CREATE',
-        object_type='User',
-        object_id=user.id,
-        details={'email': email, 'role': role},
-        request=request
-    )
-    
-    serializer = UserSerializer(user)
-    return Response({
-        'refresh': str(refresh),
-        'access': str(refresh.access_token),
-        'user': serializer.data
-    }, status=status.HTTP_201_CREATED)
-
-
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def refresh_token_view(request):
-    """Refresh access token"""
-    refresh_token = request.data.get('refresh')
-    
-    if not refresh_token:
-        return Response(
-            {'error': 'Refresh token required'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    
-    try:
-        refresh = RefreshToken(refresh_token)
-        return Response({
-            'access': str(refresh.access_token)
-        })
-    except Exception as e:
-        return Response(
-            {'error': 'Invalid refresh token'},
-            status=status.HTTP_401_UNAUTHORIZED
-        )
 
 
 @api_view(['POST'])
@@ -253,7 +151,7 @@ def forgot_password(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def reset_password(request):
-    """Reset password with token"""
+    """Reset password with token (Lien envoyé par email par exemple)"""
     token = request.data.get('token')
     new_password = request.data.get('new_password')
     
@@ -267,21 +165,33 @@ def reset_password(request):
         # Decode token
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
         user_id = payload.get('user_id')
-        
         user = User.objects.get(id=user_id)
+        
+        # On valide la force du mot de passe
+        try:
+            validate_password(new_password, user)
+        except ValidationError as e:
+            # Si le mot de passe est trop faible, on renvoie l'erreur
+            return Response({'error': list(e.messages)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # 2. On change le mot de passe
         user.set_password(new_password)
         user.save()
         
-        # Log action
+        # (puisqu'il vient de le faire lui-même)
+        if hasattr(user, 'profile'):
+            user.profile.must_change_password = False
+            user.profile.save()
+        
+        # Log action (J'ai changé 'UPDATE' en 'RESET_PASSWORD' pour que tes logs soient plus précis)
         log_action(
             user=user,
-            action='UPDATE',
+            action='RESET_PASSWORD', 
             object_type='Auth',
-            details={'action': 'reset_password'},
             request=request
         )
         
-        return Response({'success': 'Password reset successful'})
+        return Response({'success': 'Password reset successful'}, status=status.HTTP_200_OK)
         
     except jwt.ExpiredSignatureError:
         return Response(
@@ -295,9 +205,54 @@ def reset_password(request):
         )
 
 
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def force_change_password(request):
+    """
+    Force l'utilisateur à changer son mot de passe par défaut 
+    lors de sa toute première connexion.
+    """
+    # ⚠️ TRÈS IMPORTANT : On passe "context={'request': request}" au serializer
+    # pour qu'il puisse récupérer "request.user" et valider la force du mot de passe
+    serializer = ForcePasswordChangeSerializer(data=request.data, context={'request': request})
+    
+    if serializer.is_valid():
+        user = request.user
+        
+        # Le serializer a déjà vérifié que les deux mots de passe correspondent
+        # et qu'ils respectent les règles de sécurité de Django.
+        new_password = serializer.validated_data['new_password']
+        
+        # 1. On applique le nouveau mot de passe
+        user.set_password(new_password)
+        user.save()
+        
+        # 2. On libère l'utilisateur de cette obligation pour ses futures connexions
+        if hasattr(user, 'profile'):
+            user.profile.must_change_password = False
+            user.profile.save()
+            
+        # 3. On garde une trace indélébile de cette action
+        log_action(
+            user=user,
+            action='FORCE_PASSWORD_CHANGE',
+            object_type='Auth',
+            request=request
+        )
+        
+        return Response(
+            {'success': 'Mot de passe mis à jour avec succès. Vous pouvez maintenant utiliser la plateforme.'}, 
+            status=status.HTTP_200_OK
+        )
+        
+    # Si le mot de passe est trop court, ou si "new_password" != "confirm_password"
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def me(request):
-    """Get current user info"""
     serializer = UserSerializer(request.user)
-    return Response(serializer.data)
+    return Response(serializer.data, status=status.HTTP_200_OK)

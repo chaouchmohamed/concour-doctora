@@ -79,28 +79,6 @@ AUDIT_ACTIONS = [
     ('REVEAL_IDENTITY', 'Reveal Identity'),
 ]
 
-class UserProfile(models.Model):
-    """
-    Extended user profile model linked to Django's User.
-    """
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    role = models.CharField(max_length=20, choices=USER_ROLES, default='CORRECTOR')
-    phone = models.CharField(max_length=20, blank=True)
-    department = models.CharField(max_length=100, blank=True)
-    signature = models.ImageField(upload_to='signatures/', null=True, blank=True)
-    email_notifications = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        db_table = 'user_profiles'
-        indexes = [
-            models.Index(fields=['role']),
-        ]
-    
-    def __str__(self):
-        return f"{self.user.username} - {self.role}"
-
 
 class ExamSession(models.Model):
     """

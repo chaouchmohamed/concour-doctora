@@ -445,3 +445,491 @@ WARNING 2026-03-17 00:43:57,852 log 20103 140234696844992 "POST /api/auth/logout
 INFO 2026-03-22 17:39:02,146 autoreload 92664 140345008083456 Watching for file changes with StatReloader
 INFO 2026-03-22 17:39:52,135 autoreload 93414 140082616971776 Watching for file changes with StatReloader
 INFO 2026-03-22 17:40:02,779 autoreload 93504 139916680585728 Watching for file changes with StatReloader
+INFO 2026-03-24 09:16:46,013 autoreload 11827 140281225814528 Watching for file changes with StatReloader
+INFO 2026-03-24 09:31:20,468 autoreload 18771 139636320928256 Watching for file changes with StatReloader
+INFO 2026-03-24 09:33:02,920 autoreload 19880 140533989401088 Watching for file changes with StatReloader
+WARNING 2026-03-24 09:33:05,914 log 19880 140533439657664 Not Found: /
+WARNING 2026-03-24 09:33:05,915 log 19880 140533439657664 "GET / HTTP/1.1" 404 2981
+INFO 2026-03-24 09:33:10,716 log 19880 140533439657664 "GET /admin/ HTTP/1.1" 302 0
+INFO 2026-03-24 09:33:10,737 log 19880 140533439657664 "GET /admin/login/?next=/admin/ HTTP/1.1" 200 4083
+WARNING 2026-03-24 09:33:10,862 log 19880 140533439657664 Not Found: /favicon.ico
+INFO 2026-03-24 09:35:14,933 log 19880 140533439657664 "POST /admin/login/?next=/admin/ HTTP/1.1" 200 4251
+INFO 2026-03-24 09:40:45,603 autoreload 23654 139645060944384 Watching for file changes with StatReloader
+WARNING 2026-03-24 09:40:47,517 log 23654 139644511450816 Not Found: /
+WARNING 2026-03-24 09:40:47,517 log 23654 139644511450816 "GET / HTTP/1.1" 404 2981
+INFO 2026-03-24 09:40:56,064 log 23654 139644511450816 "GET /admin/ HTTP/1.1" 302 0
+INFO 2026-03-24 09:40:56,079 log 23654 139644511450816 "GET /admin/login/?next=/admin/ HTTP/1.1" 200 4083
+INFO 2026-03-24 09:41:02,209 log 23654 139644511450816 "POST /admin/login/?next=/admin/ HTTP/1.1" 200 4251
+INFO 2026-03-24 09:41:13,338 log 23654 139644511450816 "POST /admin/login/?next=/admin/ HTTP/1.1" 200 4251
+INFO 2026-03-24 09:41:47,813 log 23654 139644511450816 "POST /admin/login/?next=/admin/ HTTP/1.1" 200 4251
+INFO 2026-03-24 09:44:04,898 autoreload 25996 139948331246080 Watching for file changes with StatReloader
+WARNING 2026-03-24 09:44:06,927 log 25996 139947782698688 Not Found: /
+WARNING 2026-03-24 09:44:06,928 log 25996 139947782698688 "GET / HTTP/1.1" 404 2981
+INFO 2026-03-24 09:44:11,353 log 25996 139947782698688 "GET /admin/ HTTP/1.1" 302 0
+INFO 2026-03-24 09:44:11,367 log 25996 139947782698688 "GET /admin/login/?next=/admin/ HTTP/1.1" 200 4083
+INFO 2026-03-24 09:44:22,253 log 25996 139947782698688 "POST /admin/login/?next=/admin/ HTTP/1.1" 200 4254
+INFO 2026-03-24 09:44:34,231 log 25996 139947782698688 "POST /admin/login/?next=/admin/ HTTP/1.1" 200 4254
+INFO 2026-03-24 09:44:44,641 log 25996 139947782698688 "POST /admin/login/?next=/admin/ HTTP/1.1" 200 4254
+INFO 2026-03-24 09:45:30,145 log 25996 139947782698688 "POST /admin/login/?next=/admin/ HTTP/1.1" 200 4254
+INFO 2026-03-24 09:51:08,992 autoreload 29948 140393302856192 Watching for file changes with StatReloader
+WARNING 2026-03-24 09:51:12,944 log 29948 140392753264320 Not Found: /
+WARNING 2026-03-24 09:51:12,945 log 29948 140392753264320 "GET / HTTP/1.1" 404 2981
+INFO 2026-03-24 09:51:19,518 log 29948 140392753264320 "GET /admin/ HTTP/1.1" 302 0
+INFO 2026-03-24 09:51:19,529 log 29948 140392753264320 "GET /admin/login/?next=/admin/ HTTP/1.1" 200 4083
+INFO 2026-03-24 09:51:29,577 log 29948 140392753264320 "POST /admin/login/?next=/admin/ HTTP/1.1" 302 0
+INFO 2026-03-24 09:51:29,594 log 29948 140392753264320 "GET /admin/ HTTP/1.1" 200 14628
+INFO 2026-03-24 09:51:29,700 log 29948 140392753264320 "GET /static/admin/img/icon-addlink.svg HTTP/1.1" 200 593
+INFO 2026-03-24 09:51:29,700 log 29948 140392742774464 "GET /static/admin/img/icon-changelink.svg HTTP/1.1" 200 978
+INFO 2026-03-24 09:51:29,701 log 29948 140392734381760 "GET /static/admin/img/icon-viewlink.svg HTTP/1.1" 200 928
+ERROR 2026-03-24 09:51:43,393 log 29948 140392753264320 Internal Server Error: /admin/auth_app/userprofile/
+Traceback (most recent call last):
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/backends/sqlite3/base.py", line 359, in execute
+    return super().execute(query, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+sqlite3.OperationalError: no such table: user_profiles
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/core/handlers/base.py", line 198, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/contrib/admin/options.py", line 710, in wrapper
+    return self.admin_site.admin_view(view)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/utils/decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/utils/decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/views/decorators/cache.py", line 80, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/contrib/admin/sites.py", line 247, in inner
+    return view(request, *args, **kwargs)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/utils/decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/utils/decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/contrib/admin/options.py", line 1982, in changelist_view
+    cl = self.get_changelist_instance(request)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/contrib/admin/options.py", line 857, in get_changelist_instance
+    return ChangeList(
+        request,
+    ...<12 lines>...
+        self.search_help_text,
+    )
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/contrib/admin/views/main.py", line 143, in __init__
+    self.get_results(request)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/contrib/admin/views/main.py", line 300, in get_results
+    result_count = paginator.count
+                   ^^^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/utils/functional.py", line 47, in __get__
+    res = instance.__dict__[self.name] = self.func(instance)
+                                         ~~~~~~~~~^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/core/paginator.py", line 189, in count
+    return c()
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/models/query.py", line 610, in count
+    return self.query.get_count(using=self.db)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/models/sql/query.py", line 656, in get_count
+    return obj.get_aggregation(using, {"__count": Count("*")})["__count"]
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/models/sql/query.py", line 638, in get_aggregation
+    result = compiler.execute_sql(SINGLE)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/models/sql/compiler.py", line 1624, in execute_sql
+    cursor.execute(sql, params)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        sql, params, many=False, executor=self._execute
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/utils.py", line 94, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/backends/sqlite3/base.py", line 359, in execute
+    return super().execute(query, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+django.db.utils.OperationalError: no such table: user_profiles
+ERROR 2026-03-24 09:51:43,396 log 29948 140392753264320 "GET /admin/auth_app/userprofile/ HTTP/1.1" 500 209674
+INFO 2026-03-24 09:52:16,371 log 29948 140392753264320 "GET /admin HTTP/1.1" 301 0
+INFO 2026-03-24 09:52:16,383 log 29948 140392753264320 "GET /admin/ HTTP/1.1" 200 14628
+INFO 2026-03-24 09:52:18,994 log 29948 140392753264320 "GET /admin/auth_app/userprofile/add/ HTTP/1.1" 200 20247
+INFO 2026-03-24 09:52:19,032 log 29948 140392742774464 "GET /static/admin/css/forms.css HTTP/1.1" 200 8831
+INFO 2026-03-24 09:52:19,032 log 29948 140392716547776 "GET /static/admin/js/core.js HTTP/1.1" 200 6208
+INFO 2026-03-24 09:52:19,033 log 29948 140392724940480 "GET /static/admin/js/jquery.init.js HTTP/1.1" 200 347
+INFO 2026-03-24 09:52:19,033 log 29948 140392708155072 "GET /static/admin/js/admin/RelatedObjectLookups.js HTTP/1.1" 200 9777
+INFO 2026-03-24 09:52:19,034 log 29948 140392716547776 "GET /static/admin/js/prepopulate.js HTTP/1.1" 200 1531
+INFO 2026-03-24 09:52:19,035 log 29948 140392742774464 "GET /static/admin/js/urlify.js HTTP/1.1" 200 7887
+INFO 2026-03-24 09:52:19,036 log 29948 140392724940480 "GET /static/admin/js/actions.js HTTP/1.1" 200 8076
+INFO 2026-03-24 09:52:19,039 log 29948 140392753264320 "GET /static/admin/js/vendor/jquery/jquery.js HTTP/1.1" 200 285314
+INFO 2026-03-24 09:52:19,040 log 29948 140392734381760 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2026-03-24 09:52:19,041 log 29948 140392708155072 "GET /static/admin/js/vendor/xregexp/xregexp.js HTTP/1.1" 200 325171
+INFO 2026-03-24 09:52:19,042 log 29948 140392734381760 "GET /static/admin/js/change_form.js HTTP/1.1" 200 606
+INFO 2026-03-24 09:52:19,080 log 29948 140392742774464 "GET /static/admin/js/prepopulate_init.js HTTP/1.1" 200 586
+INFO 2026-03-24 09:52:19,081 log 29948 140392724940480 "GET /static/admin/css/widgets.css HTTP/1.1" 200 11811
+INFO 2026-03-24 09:52:42,502 log 29948 140392708155072 "GET /admin/auth/user/add/?_to_field=id&_popup=1 HTTP/1.1" 200 18909
+INFO 2026-03-24 09:52:42,543 log 29948 140392724940480 "GET /static/admin/js/inlines.js HTTP/1.1" 200 15628
+INFO 2026-03-24 09:52:42,545 log 29948 140392708155072 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2026-03-24 09:52:42,546 log 29948 140392724940480 "GET /static/admin/css/unusable_password_field.css HTTP/1.1" 200 663
+INFO 2026-03-24 09:52:42,627 log 29948 140392708155072 "GET /static/admin/img/inline-delete.svg HTTP/1.1" 200 651
+INFO 2026-03-24 09:52:47,655 log 29948 140392708155072 "GET /admin/auth/user/add/?_to_field=id&_popup=1 HTTP/1.1" 200 18909
+INFO 2026-03-24 09:52:47,694 log 29948 140392708155072 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+ERROR 2026-03-24 09:54:09,928 log 29948 140392708155072 Internal Server Error: /admin/auth/user/add/
+Traceback (most recent call last):
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/backends/sqlite3/base.py", line 359, in execute
+    return super().execute(query, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+sqlite3.OperationalError: no such table: user_profiles
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/core/handlers/base.py", line 198, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/contrib/admin/options.py", line 710, in wrapper
+    return self.admin_site.admin_view(view)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/utils/decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/utils/decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/views/decorators/cache.py", line 80, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/contrib/admin/sites.py", line 247, in inner
+    return view(request, *args, **kwargs)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/views/decorators/debug.py", line 143, in sensitive_post_parameters_wrapper
+    return view(request, *args, **kwargs)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/utils/decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/utils/decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/contrib/auth/admin.py", line 119, in add_view
+    return self._add_view(request, form_url, extra_context)
+           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/contrib/auth/admin.py", line 147, in _add_view
+    return super().add_view(request, form_url, extra_context)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/contrib/admin/options.py", line 1942, in add_view
+    return self.changeform_view(request, None, form_url, extra_context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/utils/decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/utils/decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/contrib/admin/options.py", line 1801, in changeform_view
+    return self._changeform_view(request, object_id, form_url, extra_context)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/contrib/admin/options.py", line 1853, in _changeform_view
+    self.save_related(request, form, formsets, not add)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/contrib/admin/options.py", line 1300, in save_related
+    self.save_formset(request, form, formset, change=change)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/contrib/admin/options.py", line 1288, in save_formset
+    formset.save()
+    ~~~~~~~~~~~~^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/forms/models.py", line 817, in save
+    return self.save_existing_objects(commit) + self.save_new_objects(commit)
+                                                ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/forms/models.py", line 983, in save_new_objects
+    self.new_objects.append(self.save_new(form, commit=commit))
+                            ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/forms/models.py", line 1180, in save_new
+    return super().save_new(form, commit=commit)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/forms/models.py", line 790, in save_new
+    return form.save(commit=commit)
+           ~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/forms/models.py", line 574, in save
+    self.instance.save()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/models/base.py", line 874, in save
+    self.save_base(
+    ~~~~~~~~~~~~~~^
+        using=using,
+        ^^^^^^^^^^^^
+    ...<2 lines>...
+        update_fields=update_fields,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/models/base.py", line 966, in save_base
+    updated = self._save_table(
+        raw,
+    ...<4 lines>...
+        update_fields,
+    )
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/models/base.py", line 1169, in _save_table
+    results = self._do_insert(
+        cls._base_manager, using, insert_fields, returning_fields, raw
+    )
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/models/base.py", line 1220, in _do_insert
+    return manager._insert(
+           ~~~~~~~~~~~~~~~^
+        [self],
+        ^^^^^^^
+    ...<3 lines>...
+        raw=raw,
+        ^^^^^^^^
+    )
+    ^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/models/query.py", line 1918, in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/models/sql/compiler.py", line 1925, in execute_sql
+    cursor.execute(sql, params)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        sql, params, many=False, executor=self._execute
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/utils.py", line 94, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/backends/sqlite3/base.py", line 359, in execute
+    return super().execute(query, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+django.db.utils.OperationalError: no such table: user_profiles
+ERROR 2026-03-24 09:54:09,932 log 29948 140392708155072 "POST /admin/auth/user/add/?_to_field=id&_popup=1 HTTP/1.1" 500 289283
+INFO 2026-03-24 09:55:54,275 autoreload 32763 139759730463232 Watching for file changes with StatReloader
+WARNING 2026-03-24 09:55:56,044 log 32763 139759180576448 Not Found: /
+WARNING 2026-03-24 09:55:56,045 log 32763 139759180576448 "GET / HTTP/1.1" 404 2981
+INFO 2026-03-24 09:56:00,349 log 32763 139759180576448 "GET /admin/ HTTP/1.1" 200 14628
+INFO 2026-03-24 09:56:06,506 log 32763 139759180576448 "GET /admin/auth_app/userprofile/add/ HTTP/1.1" 200 20247
+INFO 2026-03-24 09:56:06,547 log 32763 139759180576448 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+WARNING 2026-03-24 09:56:06,626 log 32763 139759180576448 Not Found: /favicon.ico
+INFO 2026-03-24 09:56:09,091 log 32763 139759180576448 "GET /admin/auth/user/add/?_to_field=id&_popup=1 HTTP/1.1" 200 18909
+INFO 2026-03-24 09:56:09,134 log 32763 139759180576448 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+ERROR 2026-03-24 09:56:46,300 log 32763 139759180576448 Internal Server Error: /admin/auth/user/add/
+Traceback (most recent call last):
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/backends/sqlite3/base.py", line 359, in execute
+    return super().execute(query, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+sqlite3.OperationalError: no such table: user_profiles
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/core/handlers/base.py", line 198, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/contrib/admin/options.py", line 710, in wrapper
+    return self.admin_site.admin_view(view)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/utils/decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/utils/decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/views/decorators/cache.py", line 80, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/contrib/admin/sites.py", line 247, in inner
+    return view(request, *args, **kwargs)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/views/decorators/debug.py", line 143, in sensitive_post_parameters_wrapper
+    return view(request, *args, **kwargs)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/utils/decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/utils/decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/contrib/auth/admin.py", line 119, in add_view
+    return self._add_view(request, form_url, extra_context)
+           ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/contrib/auth/admin.py", line 147, in _add_view
+    return super().add_view(request, form_url, extra_context)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/contrib/admin/options.py", line 1942, in add_view
+    return self.changeform_view(request, None, form_url, extra_context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/utils/decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/utils/decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/contrib/admin/options.py", line 1801, in changeform_view
+    return self._changeform_view(request, object_id, form_url, extra_context)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/contrib/admin/options.py", line 1853, in _changeform_view
+    self.save_related(request, form, formsets, not add)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/contrib/admin/options.py", line 1300, in save_related
+    self.save_formset(request, form, formset, change=change)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/contrib/admin/options.py", line 1288, in save_formset
+    formset.save()
+    ~~~~~~~~~~~~^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/forms/models.py", line 817, in save
+    return self.save_existing_objects(commit) + self.save_new_objects(commit)
+                                                ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/forms/models.py", line 983, in save_new_objects
+    self.new_objects.append(self.save_new(form, commit=commit))
+                            ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/forms/models.py", line 1180, in save_new
+    return super().save_new(form, commit=commit)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/forms/models.py", line 790, in save_new
+    return form.save(commit=commit)
+           ~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/forms/models.py", line 574, in save
+    self.instance.save()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/models/base.py", line 874, in save
+    self.save_base(
+    ~~~~~~~~~~~~~~^
+        using=using,
+        ^^^^^^^^^^^^
+    ...<2 lines>...
+        update_fields=update_fields,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/models/base.py", line 966, in save_base
+    updated = self._save_table(
+        raw,
+    ...<4 lines>...
+        update_fields,
+    )
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/models/base.py", line 1169, in _save_table
+    results = self._do_insert(
+        cls._base_manager, using, insert_fields, returning_fields, raw
+    )
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/models/base.py", line 1220, in _do_insert
+    return manager._insert(
+           ~~~~~~~~~~~~~~~^
+        [self],
+        ^^^^^^^
+    ...<3 lines>...
+        raw=raw,
+        ^^^^^^^^
+    )
+    ^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/models/query.py", line 1918, in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/models/sql/compiler.py", line 1925, in execute_sql
+    cursor.execute(sql, params)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        sql, params, many=False, executor=self._execute
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/utils.py", line 94, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/home/aboubakr/.local/share/virtualenvs/aboubakr-ZWvxqqSM/lib/python3.13/site-packages/django/db/backends/sqlite3/base.py", line 359, in execute
+    return super().execute(query, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+django.db.utils.OperationalError: no such table: user_profiles
+ERROR 2026-03-24 09:56:46,304 log 32763 139759180576448 "POST /admin/auth/user/add/?_to_field=id&_popup=1 HTTP/1.1" 500 289283
+INFO 2026-03-24 09:59:15,629 autoreload 34817 140089082446336 Watching for file changes with StatReloader
+WARNING 2026-03-24 09:59:19,558 log 34817 140088532006592 Not Found: /
+WARNING 2026-03-24 09:59:19,558 log 34817 140088532006592 "GET / HTTP/1.1" 404 2981
+INFO 2026-03-24 09:59:23,737 log 34817 140088532006592 "GET /admin/ HTTP/1.1" 200 14628
+INFO 2026-03-24 09:59:26,307 log 34817 140088532006592 "GET /admin/auth_app/userprofile/add/ HTTP/1.1" 200 20247
+INFO 2026-03-24 09:59:26,353 log 34817 140088532006592 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2026-03-24 09:59:28,819 log 34817 140088532006592 "GET /admin/auth/user/add/?_to_field=id&_popup=1 HTTP/1.1" 200 18909
+INFO 2026-03-24 09:59:28,862 log 34817 140088532006592 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2026-03-24 09:59:28,864 log 34817 140088520468160 "GET /static/admin/js/inlines.js HTTP/1.1" 200 15628
+INFO 2026-03-24 10:00:07,151 log 34817 140088532006592 "POST /admin/auth/user/add/?_to_field=id&_popup=1 HTTP/1.1" 200 326
+INFO 2026-03-24 10:00:07,182 log 34817 140088532006592 "GET /static/admin/js/popup_response.js HTTP/1.1" 200 532
+INFO 2026-03-24 10:00:32,354 log 34817 140088532006592 "POST /admin/auth_app/userprofile/add/ HTTP/1.1" 200 20512
+INFO 2026-03-24 10:00:32,402 log 34817 140088532006592 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+WARNING 2026-03-24 10:00:32,447 log 34817 140088532006592 Not Found: /favicon.ico
+INFO 2026-03-24 10:00:53,715 log 34817 140088532006592 "GET /admin/auth/user/ HTTP/1.1" 200 23609
+INFO 2026-03-24 10:00:53,756 log 34817 140088532006592 "GET /static/admin/css/changelists.css HTTP/1.1" 200 7498
+INFO 2026-03-24 10:00:53,759 log 34817 140088503682752 "GET /static/admin/js/filters.js HTTP/1.1" 200 978
+INFO 2026-03-24 10:00:53,759 log 34817 140088512075456 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2026-03-24 10:00:53,801 log 34817 140088503682752 "GET /static/admin/img/icon-yes.svg HTTP/1.1" 200 558
+INFO 2026-03-24 10:00:53,802 log 34817 140088512075456 "GET /static/admin/img/search.svg HTTP/1.1" 200 607
+INFO 2026-03-24 10:00:53,835 log 34817 140088503682752 "GET /static/admin/img/sorting-icons.svg HTTP/1.1" 200 1761
+INFO 2026-03-24 10:00:53,836 log 34817 140088512075456 "GET /static/admin/img/tooltag-add.svg HTTP/1.1" 200 593
+WARNING 2026-03-24 10:00:53,892 log 34817 140088512075456 Not Found: /favicon.ico
+INFO 2026-03-24 10:01:05,690 log 34817 140088532006592 "GET /admin/auth_app/userprofile/ HTTP/1.1" 200 17933
+INFO 2026-03-24 10:01:05,724 log 34817 140088503682752 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2026-03-24 10:01:23,294 log 34817 140088532006592 "GET /admin/auth_app/userprofile/add/ HTTP/1.1" 200 20284
+INFO 2026-03-24 10:01:23,340 log 34817 140088503682752 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+WARNING 2026-03-24 10:01:23,377 log 34817 140088503682752 Not Found: /favicon.ico
+INFO 2026-03-24 10:01:43,223 log 34817 140088532006592 "POST /admin/auth_app/userprofile/add/ HTTP/1.1" 200 20485
+INFO 2026-03-24 10:01:43,260 log 34817 140088532006592 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+WARNING 2026-03-24 10:01:43,346 log 34817 140088532006592 Not Found: /favicon.ico
+INFO 2026-03-24 10:01:48,612 log 34817 140088503682752 "GET /admin/auth_app/userprofile/ HTTP/1.1" 200 17933
+INFO 2026-03-24 10:01:48,652 log 34817 140088503682752 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2026-03-24 10:01:48,652 log 34817 140088494241472 "GET /static/admin/js/filters.js HTTP/1.1" 200 978
+WARNING 2026-03-24 10:01:48,729 log 34817 140088494241472 Not Found: /favicon.ico
+INFO 2026-03-24 10:01:51,218 log 34817 140088503682752 "GET /admin/auth_app/userprofile/ HTTP/1.1" 200 17933
+INFO 2026-03-24 10:01:51,256 log 34817 140088532006592 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+WARNING 2026-03-24 10:01:51,288 log 34817 140088532006592 Not Found: /favicon.ico
+INFO 2026-03-24 10:01:54,828 log 34817 140088503682752 "GET /admin/auth_app/userprofile/1/change/ HTTP/1.1" 200 20558
+INFO 2026-03-24 10:01:54,861 log 34817 140088503682752 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2026-03-24 10:01:59,739 log 34817 140088503682752 "POST /admin/auth_app/userprofile/1/change/ HTTP/1.1" 302 0
+INFO 2026-03-24 10:01:59,751 log 34817 140088503682752 "GET /admin/auth_app/userprofile/ HTTP/1.1" 200 18157
+INFO 2026-03-24 10:01:59,835 log 34817 140088142984896 "GET /admin/jsi18n/ HTTP/1.1" 200 3342
+INFO 2026-03-24 10:01:59,836 log 34817 140088142984896 "GET /static/admin/img/icon-no.svg HTTP/1.1" 200 645
+INFO 2026-03-24 10:01:59,861 log 34817 140088503682752 "GET /static/admin/img/icon-yes-dark.svg HTTP/1.1" 200 558
+WARNING 2026-03-24 10:01:59,884 log 34817 140088142984896 Not Found: /favicon.ico
+INFO 2026-03-24 10:03:36,823 autoreload 37406 140249593811456 Watching for file changes with StatReloader

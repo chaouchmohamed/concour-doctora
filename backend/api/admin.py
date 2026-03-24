@@ -4,6 +4,7 @@ Django Admin Configuration
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
+from auth_app.models import UserProfile
 from .models import *
 
 # Inline for UserProfile
