@@ -442,3 +442,6 @@ WARNING 2026-03-17 00:43:28,983 log 20103 140234696844992 "POST /api/auth/login/
 INFO 2026-03-17 00:43:51,699 log 20103 140234696844992 "POST /api/auth/login/ HTTP/1.1" 200 1009
 WARNING 2026-03-17 00:43:57,851 log 20103 140234696844992 Bad Request: /api/auth/logout/
 WARNING 2026-03-17 00:43:57,852 log 20103 140234696844992 "POST /api/auth/logout/ HTTP/1.1" 400 62
+INFO 2026-03-22 17:39:02,146 autoreload 92664 140345008083456 Watching for file changes with StatReloader
+INFO 2026-03-22 17:39:52,135 autoreload 93414 140082616971776 Watching for file changes with StatReloader
+INFO 2026-03-22 17:40:02,779 autoreload 93504 139916680585728 Watching for file changes with StatReloader
