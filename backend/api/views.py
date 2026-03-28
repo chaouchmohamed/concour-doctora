@@ -22,7 +22,7 @@ from .permissions import *
 from utils.audit import log_action
 from utils.anonymizer import generate_anonymous_codes
 from pdf_generator.generators import generate_pv_report, generate_call_list
-
+from auth_app.models import UserProfile
 
 # ========== USER VIEWS ==========
 

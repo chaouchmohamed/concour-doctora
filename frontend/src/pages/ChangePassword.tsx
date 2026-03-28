@@ -136,7 +136,8 @@ const ForcedChangeView = () => {
       // No current password needed — backend checks must_change_password flag
       await changePassword(newPass);
       setSuccess(true);
-      setTimeout(() => navigate(ROUTES.DASHBOARD, { replace: true }), 2400);
+      // Navigate immediately — no delay avoids the voluntary-change UI flash
+      navigate(ROUTES.DASHBOARD, { replace: true });
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to change password. Please try again.');
     } finally {
@@ -504,6 +505,9 @@ const VoluntaryChangeView = () => {
 
 export const ChangePasswordPage = () => {
   const { user } = useAuth();
-  const isForced = user?.must_change_password === true;
-  return isForced ? <ForcedChangeView /> : <VoluntaryChangeView />;
+  // Lock the view on mount so a state update mid-flight never flips between views
+  const [viewMode] = useState<'forced' | 'voluntary'>(
+    user?.must_change_password ? 'forced' : 'voluntary'
+  );
+  return viewMode === 'forced' ? <ForcedChangeView /> : <VoluntaryChangeView />;
 };
