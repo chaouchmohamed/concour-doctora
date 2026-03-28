@@ -20,13 +20,16 @@ export const LoginPage = () => {
   const location = useLocation();
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || ROUTES.DASHBOARD;
 
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
     try {
       await login(username.trim(), password);
+      // ProtectedRoute will intercept if must_change_password is true after login
       navigate(from, { replace: true });
+
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
     } finally {

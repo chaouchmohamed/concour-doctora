@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { AuthUser } from '../types';
 
-const API_BASE = 'http://localhost:8000/api';
+export const API_BASE = 'http://localhost:8000/api';
 
 interface AuthContextValue {
     user: AuthUser | null;
@@ -9,6 +9,8 @@ interface AuthContextValue {
     isLoading: boolean;
     login: (username: string, password: string) => Promise<void>;
     logout: () => Promise<void>;
+    changePassword: (newPassword: string, currentPassword?: string) => Promise<void>;
+    refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -37,7 +39,7 @@ const clearTokens = () => {
  * Make an authenticated fetch. On 401 it tries to refresh the access
  * token once; on second failure it returns the failed Response.
  */
-async function authFetch(input: RequestInfo, init: RequestInit = {}): Promise<Response> {
+export async function authFetch(input: RequestInfo, init: RequestInit = {}): Promise<Response> {
     const headers = new Headers(init.headers);
     const access = getAccess();
     if (access) headers.set('Authorization', `Bearer ${access}`);
@@ -89,6 +91,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     }, []);
 
+    const refreshUser = useCallback(async () => {
+        await fetchMe();
+    }, [fetchMe]);
+
     // On mount: if we have a stored token, verify it
     useEffect(() => {
         if (getAccess()) {
@@ -115,6 +121,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(data.user as AuthUser);
     }, []);
 
+    /**
+     * Change password (authenticated). Used for both:
+     *  - First-login forced change (must_change_password = true)
+     *  - Regular change from settings
+     * After success, refreshes user so must_change_password becomes false.
+     */
+    const changePassword = useCallback(async (newPassword: string, currentPassword?: string) => {
+        const body: Record<string, string> = { new_password: newPassword };
+        if (currentPassword) body.current_password = currentPassword;
+
+        const res = await authFetch(`${API_BASE}/auth/change-password/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error || err.detail || 'Failed to change password');
+        }
+
+        // Backend returns fresh tokens after password change — store them
+        const data = await res.json();
+        if (data.access && data.refresh) {
+            setTokens(data.access, data.refresh);
+        }
+
+        // Refresh user so must_change_password flag is updated to false
+        await fetchMe();
+    }, [fetchMe]);
+
     const logout = useCallback(async () => {
         const refresh = getRefresh();
         try {
@@ -134,7 +171,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }, []);
 
     return (
-        <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout }}>
+        <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout, changePassword, refreshUser }}>
             {children}
         </AuthContext.Provider>
     );

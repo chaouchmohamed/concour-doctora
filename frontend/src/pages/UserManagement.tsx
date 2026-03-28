@@ -14,9 +14,9 @@ import {
   X,
   RefreshCw,
   ChevronDown,
-  Eye,
-  EyeOff,
   AlertTriangle,
+  KeyRound,
+  LogIn,
 } from "lucide-react";
 import { AppShell } from "../components/AppShell";
 import { Card } from "../components/UI";
@@ -43,6 +43,7 @@ interface AppUser {
   role: UserRole;
   status: UserStatus;
   lastLogin: string;
+  must_change_password: boolean; // true = first-login pending
 }
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
@@ -55,6 +56,7 @@ const initialUsers: AppUser[] = [
     role: "ADMIN",
     status: "ACTIVE",
     lastLogin: "2026-03-09 14:22",
+    must_change_password: false,
   },
   {
     id: "2",
@@ -63,6 +65,7 @@ const initialUsers: AppUser[] = [
     role: "COORDINATOR",
     status: "ACTIVE",
     lastLogin: "2026-03-09 10:15",
+    must_change_password: false,
   },
   {
     id: "3",
@@ -71,6 +74,7 @@ const initialUsers: AppUser[] = [
     role: "CORRECTOR",
     status: "ACTIVE",
     lastLogin: "2026-03-08 16:45",
+    must_change_password: false,
   },
   {
     id: "4",
@@ -79,6 +83,7 @@ const initialUsers: AppUser[] = [
     role: "CFD_HEAD",
     status: "ACTIVE",
     lastLogin: "2026-03-07 09:30",
+    must_change_password: false,
   },
   {
     id: "5",
@@ -87,6 +92,7 @@ const initialUsers: AppUser[] = [
     role: "SUPERVISOR",
     status: "INACTIVE",
     lastLogin: "2026-02-15 11:00",
+    must_change_password: false,
   },
   {
     id: "6",
@@ -95,7 +101,9 @@ const initialUsers: AppUser[] = [
     role: "CORRECTOR",
     status: "ACTIVE",
     lastLogin: "2026-03-09 08:12",
+    must_change_password: false,
   },
+  // ── First-login pending users (must_change_password = true) ──
   {
     id: "7",
     name: "Hassan Medjdoub",
@@ -103,6 +111,25 @@ const initialUsers: AppUser[] = [
     role: "JURY_MEMBER",
     status: "PENDING",
     lastLogin: "Never",
+    must_change_password: true,
+  },
+  {
+    id: "8",
+    name: "Nadia Ferhat",
+    email: "n.ferhat@univ-alger.dz",
+    role: "CORRECTOR",
+    status: "PENDING",
+    lastLogin: "Never",
+    must_change_password: true,
+  },
+  {
+    id: "9",
+    name: "Karim Boucherit",
+    email: "k.boucherit@univ-alger.dz",
+    role: "JURY_PRESIDENT",
+    status: "PENDING",
+    lastLogin: "Never",
+    must_change_password: true,
   },
 ];
 
@@ -175,6 +202,7 @@ const InviteModal = ({
         role,
         status: "PENDING",
         lastLogin: "Never",
+        must_change_password: true, // New invitees always need first-login password change
       });
       setTimeout(onClose, 1000);
     }, 1300);
@@ -209,6 +237,10 @@ const InviteModal = ({
               Invitation Sent!
             </p>
             <p className="text-xs text-gray-400">{email}</p>
+            <p className="text-[11px] text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 mx-4 flex items-center gap-1.5 justify-center">
+              <KeyRound size={11} />
+              User will be required to change password on first login
+            </p>
           </div>
         ) : (
           <>
@@ -261,6 +293,13 @@ const InviteModal = ({
                 </div>
                 <p className="text-[10px] text-gray-400 mt-1">
                   Each role has strictly defined permissions per the SRS.
+                </p>
+              </div>
+              {/* Note about first-login */}
+              <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5">
+                <KeyRound size={13} className="text-amber-600 mt-0.5 shrink-0" />
+                <p className="text-[11px] text-amber-700 leading-relaxed">
+                  A temporary password will be emailed. The user must change it on first login.
                 </p>
               </div>
             </div>
@@ -487,13 +526,33 @@ const DeleteModal = ({
   );
 };
 
+// ─── First-Login Badge ────────────────────────────────────────────────────────
+
+const FirstLoginBadge = () => (
+  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-300 whitespace-nowrap">
+    <KeyRound size={9} />
+    First Login
+  </span>
+);
+
+const LoggedInBadge = () => (
+  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
+    <LogIn size={9} />
+    Logged In
+  </span>
+);
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
+
+type LoginFilter = "ALL" | "FIRST_LOGIN" | "ACTIVATED";
 
 export const UserManagementPage = () => {
   const [users, setUsers] = useState<AppUser[]>(initialUsers);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<UserRole | "ALL">("ALL");
+  const [loginFilter, setLoginFilter] = useState<LoginFilter>("ALL");
   const [showFilter, setShowFilter] = useState(false);
+  const [showLoginFilter, setShowLoginFilter] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
   const [editTarget, setEditTarget] = useState<AppUser | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AppUser | null>(null);
@@ -504,7 +563,11 @@ export const UserManagementPage = () => {
       u.name.toLowerCase().includes(search.toLowerCase()) ||
       u.email.toLowerCase().includes(search.toLowerCase());
     const matchRole = roleFilter === "ALL" || u.role === roleFilter;
-    return matchSearch && matchRole;
+    const matchLogin =
+      loginFilter === "ALL" ||
+      (loginFilter === "FIRST_LOGIN" && u.must_change_password) ||
+      (loginFilter === "ACTIVATED" && !u.must_change_password);
+    return matchSearch && matchRole && matchLogin;
   });
 
   const stats = {
@@ -512,6 +575,7 @@ export const UserManagementPage = () => {
     active: users.filter((u) => u.status === "ACTIVE").length,
     inactive: users.filter((u) => u.status === "INACTIVE").length,
     pending: users.filter((u) => u.status === "PENDING").length,
+    firstLogin: users.filter((u) => u.must_change_password).length,
   };
 
   const handleInvite = (u: AppUser) => setUsers((prev) => [...prev, u]);
@@ -521,6 +585,12 @@ export const UserManagementPage = () => {
     setUsers((prev) =>
       prev.map((u) => (u.id === id ? { ...u, status: "INACTIVE" } : u)),
     );
+
+  const loginFilterLabel: Record<LoginFilter, string> = {
+    ALL: "All",
+    FIRST_LOGIN: "First Login Pending",
+    ACTIVATED: "Already Activated",
+  };
 
   return (
     <AppShell title="User Management">
@@ -549,7 +619,7 @@ export const UserManagementPage = () => {
 
       <div className="flex flex-col gap-4 h-full">
         {/* Stats */}
-        <div className="grid grid-cols-4 gap-3 shrink-0">
+        <div className="grid grid-cols-5 gap-3 shrink-0">
           {[
             {
               label: "Total Users",
@@ -575,6 +645,12 @@ export const UserManagementPage = () => {
               Icon: Clock,
               cls: "text-amber-600 bg-amber-50",
             },
+            {
+              label: "First Login",
+              value: stats.firstLogin,
+              Icon: KeyRound,
+              cls: "text-orange-600 bg-orange-50",
+            },
           ].map((s, i) => (
             <motion.div
               key={s.label}
@@ -582,7 +658,19 @@ export const UserManagementPage = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.06 }}
             >
-              <Card className="p-4 flex items-center gap-3">
+              <Card
+                className={cn(
+                  "p-4 flex items-center gap-3 cursor-pointer transition-all hover:shadow-md",
+                  s.label === "First Login" && stats.firstLogin > 0
+                    ? "ring-1 ring-orange-200 hover:ring-orange-300"
+                    : "",
+                )}
+                onClick={() => {
+                  if (s.label === "First Login") {
+                    setLoginFilter(loginFilter === "FIRST_LOGIN" ? "ALL" : "FIRST_LOGIN");
+                  }
+                }}
+              >
                 <div
                   className={cn(
                     "w-9 h-9 rounded-full flex items-center justify-center shrink-0",
@@ -595,18 +683,56 @@ export const UserManagementPage = () => {
                   <p className="text-[10px] font-bold uppercase tracking-wider text-muted leading-tight">
                     {s.label}
                   </p>
-                  <p className="text-2xl font-bold text-text-primary leading-none mt-0.5">
-                    {s.value}
-                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-2xl font-bold text-text-primary leading-none mt-0.5">
+                      {s.value}
+                    </p>
+                    {s.label === "First Login" && s.value > 0 && (
+                      <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse mt-0.5" />
+                    )}
+                  </div>
                 </div>
               </Card>
             </motion.div>
           ))}
         </div>
 
+        {/* First-login alert banner */}
+        <AnimatePresence>
+          {stats.firstLogin > 0 && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden shrink-0"
+            >
+              <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
+                <div className="w-7 h-7 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                  <KeyRound size={13} className="text-amber-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-[12px] font-bold text-amber-800">
+                    {stats.firstLogin} user{stats.firstLogin > 1 ? "s" : ""} awaiting first login
+                  </p>
+                  <p className="text-[11px] text-amber-600">
+                    These users received a temporary password by email and must set a new one before accessing the platform.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setLoginFilter(loginFilter === "FIRST_LOGIN" ? "ALL" : "FIRST_LOGIN")}
+                  className="text-[11px] font-bold text-amber-700 hover:text-amber-900 bg-amber-100 hover:bg-amber-200 px-3 py-1.5 rounded-lg transition-colors shrink-0"
+                >
+                  {loginFilter === "FIRST_LOGIN" ? "Show all" : "View them"}
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Toolbar */}
         <div className="flex items-center justify-between gap-3 shrink-0 flex-wrap">
-          <div className="flex items-center gap-2 flex-1 max-w-xl">
+          <div className="flex items-center gap-2 flex-1 max-w-2xl">
             <div className="relative flex-1">
               <Search
                 className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted"
@@ -616,16 +742,16 @@ export const UserManagementPage = () => {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search users..."
+                placeholder="Search by name or email…"
                 className="input-field pl-8 text-xs h-9 w-full"
               />
             </div>
 
-            {/* Role filter dropdown */}
+            {/* Role filter */}
             <div className="relative">
               <button
                 type="button"
-                onClick={() => setShowFilter((v) => !v)}
+                onClick={() => { setShowFilter((v) => !v); setShowLoginFilter(false); }}
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold transition-colors",
                   roleFilter !== "ALL"
@@ -634,13 +760,10 @@ export const UserManagementPage = () => {
                 )}
               >
                 <Filter size={13} />
-                {roleFilter === "ALL" ? "Role Filter" : roleLabels[roleFilter]}
+                {roleFilter === "ALL" ? "Role" : roleLabels[roleFilter]}
                 <ChevronDown
                   size={12}
-                  className={cn(
-                    "transition-transform",
-                    showFilter && "rotate-180",
-                  )}
+                  className={cn("transition-transform", showFilter && "rotate-180")}
                 />
               </button>
               <AnimatePresence>
@@ -651,24 +774,14 @@ export const UserManagementPage = () => {
                     exit={{ opacity: 0, y: -6 }}
                     className="absolute left-0 top-full mt-1 z-30 bg-white border border-border rounded-xl shadow-lg overflow-hidden min-w-[190px]"
                   >
-                    {(
-                      ["ALL", ...Object.keys(roleLabels)] as (
-                        | UserRole
-                        | "ALL"
-                      )[]
-                    ).map((r) => (
+                    {(["ALL", ...Object.keys(roleLabels)] as (UserRole | "ALL")[]).map((r) => (
                       <button
                         key={r}
                         type="button"
-                        onClick={() => {
-                          setRoleFilter(r);
-                          setShowFilter(false);
-                        }}
+                        onClick={() => { setRoleFilter(r); setShowFilter(false); }}
                         className={cn(
                           "w-full text-left px-4 py-2.5 text-xs transition-colors hover:bg-black/[0.04]",
-                          roleFilter === r
-                            ? "font-bold text-primary-accent"
-                            : "text-muted",
+                          roleFilter === r ? "font-bold text-primary-accent" : "text-muted",
                         )}
                       >
                         {r === "ALL" ? "All Roles" : roleLabels[r as UserRole]}
@@ -679,10 +792,64 @@ export const UserManagementPage = () => {
               </AnimatePresence>
             </div>
 
-            {roleFilter !== "ALL" && (
+            {/* Login status filter */}
+            <div className="relative">
               <button
                 type="button"
-                onClick={() => setRoleFilter("ALL")}
+                onClick={() => { setShowLoginFilter((v) => !v); setShowFilter(false); }}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold transition-colors",
+                  loginFilter !== "ALL"
+                    ? "border-amber-500 bg-amber-50 text-amber-700"
+                    : "border-border text-text-primary hover:bg-black/[0.03]",
+                )}
+              >
+                <KeyRound size={13} />
+                {loginFilterLabel[loginFilter]}
+                <ChevronDown
+                  size={12}
+                  className={cn("transition-transform", showLoginFilter && "rotate-180")}
+                />
+              </button>
+              <AnimatePresence>
+                {showLoginFilter && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    className="absolute left-0 top-full mt-1 z-30 bg-white border border-border rounded-xl shadow-lg overflow-hidden min-w-[200px]"
+                  >
+                    {(["ALL", "FIRST_LOGIN", "ACTIVATED"] as LoginFilter[]).map((f) => (
+                      <button
+                        key={f}
+                        type="button"
+                        onClick={() => { setLoginFilter(f); setShowLoginFilter(false); }}
+                        className={cn(
+                          "w-full text-left px-4 py-2.5 text-xs transition-colors hover:bg-black/[0.04] flex items-center gap-2",
+                          loginFilter === f ? "font-bold text-amber-700" : "text-muted",
+                        )}
+                      >
+                        {f === "FIRST_LOGIN" && <KeyRound size={11} className="text-amber-500" />}
+                        {f === "ACTIVATED" && <LogIn size={11} className="text-emerald-500" />}
+                        {f === "ALL" && <Users size={11} />}
+                        {loginFilterLabel[f]}
+                        {f === "FIRST_LOGIN" && stats.firstLogin > 0 && (
+                          <span className="ml-auto bg-amber-100 text-amber-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                            {stats.firstLogin}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Clear filters */}
+            {(roleFilter !== "ALL" || loginFilter !== "ALL") && (
+              <button
+                type="button"
+                onClick={() => { setRoleFilter("ALL"); setLoginFilter("ALL"); }}
                 className="flex items-center gap-1 px-2.5 py-2 rounded-xl border border-border text-xs text-muted hover:text-text-primary hover:bg-black/[0.03] transition-colors"
               >
                 <X size={12} /> Clear
@@ -699,40 +866,52 @@ export const UserManagementPage = () => {
           </button>
         </div>
 
-        {/* Table card — fills remaining height */}
+        {/* Table card */}
         <Card className="overflow-hidden flex flex-col flex-1 min-h-0">
           <div className="overflow-y-auto flex-1">
             <table className="w-full text-left border-collapse">
               <thead className="sticky top-0 z-10">
                 <tr className="bg-surface border-b border-border">
-                  {["User", "Role", "Status", "Last Login", "Actions"].map(
-                    (h) => (
-                      <th
-                        key={h}
-                        className="p-3 text-[10px] font-bold text-muted uppercase tracking-wider whitespace-nowrap"
-                      >
-                        {h}
-                      </th>
-                    ),
-                  )}
+                  {["User", "Role", "Status", "Password Setup", "Last Login", "Actions"].map((h) => (
+                    <th
+                      key={h}
+                      className="p-3 text-[10px] font-bold text-muted uppercase tracking-wider whitespace-nowrap"
+                    >
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {filtered.map((user) => (
-                  <tr
+                  <motion.tr
                     key={user.id}
-                    className="hover:bg-black/[0.015] transition-colors group"
+                    layout
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className={cn(
+                      "hover:bg-black/[0.015] transition-colors group",
+                      user.must_change_password && "bg-amber-50/40",
+                    )}
                   >
                     {/* User */}
                     <td className="p-3">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-full bg-primary-accent/10 flex items-center justify-center text-primary-accent font-bold text-[11px] border border-primary-accent/20 shrink-0">
+                        <div className={cn(
+                          "w-8 h-8 rounded-full flex items-center justify-center font-bold text-[11px] border shrink-0 relative",
+                          user.must_change_password
+                            ? "bg-amber-100 text-amber-700 border-amber-300"
+                            : "bg-primary-accent/10 text-primary-accent border-primary-accent/20"
+                        )}>
                           {initials(user.name)}
+                          {user.must_change_password && (
+                            <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-amber-500 border-2 border-white flex items-center justify-center">
+                              <KeyRound size={6} className="text-white" />
+                            </span>
+                          )}
                         </div>
                         <div>
-                          <p className="text-xs font-bold text-text-primary">
-                            {user.name}
-                          </p>
+                          <p className="text-xs font-bold text-text-primary">{user.name}</p>
                           <p className="text-[10px] text-muted">{user.email}</p>
                         </div>
                       </div>
@@ -740,26 +919,37 @@ export const UserManagementPage = () => {
 
                     {/* Role */}
                     <td className="p-3">
-                      <span
-                        className={cn(
-                          "inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap",
-                          rolePill[user.role],
-                        )}
-                      >
+                      <span className={cn(
+                        "inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap",
+                        rolePill[user.role],
+                      )}>
                         {roleLabels[user.role]}
                       </span>
                     </td>
 
                     {/* Status */}
                     <td className="p-3">
-                      <span className={statusPill[user.status]}>
-                        {user.status}
-                      </span>
+                      <span className={statusPill[user.status]}>{user.status}</span>
+                    </td>
+
+                    {/* Password Setup — the new column */}
+                    <td className="p-3">
+                      {user.must_change_password ? (
+                        <FirstLoginBadge />
+                      ) : (
+                        <LoggedInBadge />
+                      )}
                     </td>
 
                     {/* Last login */}
                     <td className="p-3 text-xs text-muted tabular-nums">
-                      {user.lastLogin}
+                      {user.lastLogin === "Never" ? (
+                        <span className="text-amber-600 font-medium flex items-center gap-1">
+                          <Clock size={11} /> Never
+                        </span>
+                      ) : (
+                        user.lastLogin
+                      )}
                     </td>
 
                     {/* Actions */}
@@ -792,14 +982,11 @@ export const UserManagementPage = () => {
                         )}
                       </div>
                     </td>
-                  </tr>
+                  </motion.tr>
                 ))}
                 {filtered.length === 0 && (
                   <tr>
-                    <td
-                      colSpan={5}
-                      className="p-10 text-center text-muted text-xs"
-                    >
+                    <td colSpan={6} className="p-10 text-center text-muted text-xs">
                       No users match your search or filter.
                     </td>
                   </tr>
@@ -812,19 +999,26 @@ export const UserManagementPage = () => {
           <div className="px-5 py-3 border-t border-border flex items-center justify-between shrink-0">
             <p className="text-xs text-muted">
               Showing{" "}
-              <span className="font-semibold text-text-primary">
-                {filtered.length}
-              </span>{" "}
+              <span className="font-semibold text-text-primary">{filtered.length}</span>{" "}
               of{" "}
-              <span className="font-semibold text-text-primary">
-                {users.length}
-              </span>{" "}
+              <span className="font-semibold text-text-primary">{users.length}</span>{" "}
               users
+              {loginFilter === "FIRST_LOGIN" && (
+                <span className="ml-2 text-amber-600 font-semibold">· First login pending</span>
+              )}
             </p>
-            <p className="text-xs text-muted flex items-center gap-1.5">
-              <Shield size={10} className="text-primary-accent" />
-              RBAC enforced · {Object.keys(roleLabels).length} roles defined
-            </p>
+            <div className="flex items-center gap-3">
+              {stats.firstLogin > 0 && (
+                <p className="text-xs text-amber-600 flex items-center gap-1.5">
+                  <KeyRound size={10} />
+                  {stats.firstLogin} awaiting first login
+                </p>
+              )}
+              <p className="text-xs text-muted flex items-center gap-1.5">
+                <Shield size={10} className="text-primary-accent" />
+                RBAC enforced · {Object.keys(roleLabels).length} roles defined
+              </p>
+            </div>
           </div>
         </Card>
       </div>

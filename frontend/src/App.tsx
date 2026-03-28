@@ -6,6 +6,8 @@ import { UserRole } from './types';
 
 import { LandingPage } from './pages/Landing';
 import { LoginPage } from './pages/Auth';
+import { ForgotPasswordPage } from './pages/ForgotPassword';
+import { ChangePasswordPage } from './pages/ChangePassword';
 import { Dashboard } from './pages/Dashboard';
 import { CandidatesPage } from './pages/Candidates';
 import { SupervisorPWA } from './pages/Supervisor';
@@ -30,8 +32,16 @@ export default function App() {
           {/* Public */}
           <Route path={ROUTES.HOME} element={<LandingPage />} />
           <Route path={ROUTES.LOGIN} element={<LoginPage />} />
+          <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPasswordPage />} />
           {/* Redirect /register → /login since there is no registration */}
           <Route path={ROUTES.REGISTER} element={<Navigate to={ROUTES.LOGIN} replace />} />
+
+          {/* Change password — needs auth (forced first-login or voluntary) */}
+          <Route path={ROUTES.CHANGE_PASSWORD} element={
+            <ProtectedRoute>
+              <ChangePasswordPage />
+            </ProtectedRoute>
+          } />
 
           {/* ── Protected Routes ── */}
           <Route path={ROUTES.DASHBOARD} element={

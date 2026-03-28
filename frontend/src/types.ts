@@ -51,6 +51,7 @@ export interface AuthUser {
   is_active: boolean;
   date_joined: string;
   last_login: string | null;
+  must_change_password: boolean;
   profile: UserProfile;
 }
 

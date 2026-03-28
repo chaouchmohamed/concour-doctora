@@ -19,21 +19,28 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = UserProfile
         fields = ['id', 'username', 'email', 'first_name', 'last_name', 'role', 
                   'phone', 'department', 'signature', 'email_notifications',
-                  'created_at', 'updated_at']
+                  'must_change_password', 'created_at', 'updated_at']
 
 
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for User with profile"""
     profile = UserProfileSerializer(read_only=True)
     full_name = serializers.SerializerMethodField()
-    
+    must_change_password = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'full_name', 
-                  'is_active', 'date_joined', 'last_login', 'profile']
-    
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'full_name',
+                  'is_active', 'date_joined', 'last_login', 'must_change_password', 'profile']
+
     def get_full_name(self, obj):
         return f"{obj.first_name} {obj.last_name}".strip() or obj.username
+
+    def get_must_change_password(self, obj):
+        try:
+            return bool(obj.profile.must_change_password)
+        except Exception:
+            return False
 
 
 class ExamSessionSerializer(serializers.ModelSerializer):

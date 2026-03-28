@@ -28,6 +28,12 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
         return <Navigate to={ROUTES.LOGIN} state={{ from: location }} replace />;
     }
 
+    // If the backend says the user MUST change their password first,
+    // redirect to the change-password page (unless already there).
+    if (user?.must_change_password && location.pathname !== ROUTES.CHANGE_PASSWORD) {
+        return <Navigate to={ROUTES.CHANGE_PASSWORD} replace />;
+    }
+
     if (allowedRoles && user && !allowedRoles.includes(user.profile.role as UserRole)) {
         // Redirect to the first page the user CAN access
         return <Navigate to={ROUTES.DASHBOARD} replace />;
