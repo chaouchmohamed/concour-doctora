@@ -71,6 +71,7 @@ python manage.py migrate
 ```
 
 Expected output ends with:
+
 ```
 Applying sessions.0001_initial... OK
 ```
@@ -84,9 +85,10 @@ python manage.py createsuperuser
 ```
 
 When prompted:
+
 - **Username:** `admin`
 - **Email:** `admin@esi-sba.dz`
-- **Password:** `Admin123!`  *(type `y` if it asks to bypass validation)*
+- **Password:** `Admin123!` _(type `y` if it asks to bypass validation)_
 
 ---
 
@@ -105,6 +107,7 @@ python manage.py runserver
 ```
 
 You should see:
+
 ```
 Starting development server at http://127.0.0.1:8000/
 ```
@@ -115,22 +118,23 @@ Starting development server at http://127.0.0.1:8000/
 
 Open these in your browser:
 
-| URL | What you should see |
-|---|---|
-| `http://127.0.0.1:8000/admin/` | Django admin login |
-| `http://127.0.0.1:8000/api/` | API root |
-| `http://127.0.0.1:8000/swagger/` | Swagger docs |
+| URL                              | What you should see |
+| -------------------------------- | ------------------- |
+| `http://127.0.0.1:8000/admin/`   | Django admin login  |
+| `http://127.0.0.1:8000/api/`     | API root            |
+| `http://127.0.0.1:8000/swagger/` | Swagger docs        |
 
 Login to admin with `admin` / `Admin123!`
+Login to admin with `bakirou` / `aboubakr123!`
 
 ---
 
 ## Troubleshooting
 
-| Error | Fix |
-|---|---|
-| `No module named 'X'` | `pip install X` |
-| `No module named 'pkg_resources'` | Run the fix in step 4 |
-| `UNIQUE constraint failed` | `rm -f db.sqlite3` then redo step 6 |
-| `venv/bin/activate: not found` | Run step 2 again from the `backend/` directory |
-| Port 8000 in use | `fuser -k 8000/tcp` then retry |
+| Error                             | Fix                                            |
+| --------------------------------- | ---------------------------------------------- |
+| `No module named 'X'`             | `pip install X`                                |
+| `No module named 'pkg_resources'` | Run the fix in step 4                          |
+| `UNIQUE constraint failed`        | `rm -f db.sqlite3` then redo step 6            |
+| `venv/bin/activate: not found`    | Run step 2 again from the `backend/` directory |
+| Port 8000 in use                  | `fuser -k 8000/tcp` then retry                 |
