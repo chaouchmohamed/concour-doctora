@@ -258,21 +258,21 @@ class AuditLogSerializer(serializers.ModelSerializer):
 
 
 class BulkAttendanceSerializer(serializers.Serializer):
-    """Serializer for bulk attendance marking"""
-    session_id = serializers.IntegerField()
-    attendance = serializers.ListField(
-        child=serializers.DictField(
-            child=serializers.CharField()
-        )
+    """Serializer for bulk attendance marking from PWA"""
+    session = serializers.DictField(required=True)
+    records = serializers.ListField(
+        child=serializers.DictField(),
+        required=True
     )
     
-    def validate_attendance(self, value):
+    def validate_records(self, value):
         for item in value:
-            if 'candidate_id' not in item:
-                raise serializers.ValidationError("Each attendance record must have candidate_id")
+            if 'application_number' not in item:
+                raise serializers.ValidationError("Each record must have application_number")
             if 'present' not in item:
-                raise serializers.ValidationError("Each attendance record must have present status")
+                raise serializers.ValidationError("Each record must have present status")
         return value
+
 
 
 class CandidateImportSerializer(serializers.Serializer):

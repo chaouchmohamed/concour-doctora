@@ -265,10 +265,22 @@ class Attendance(models.Model):
     """
     Attendance records for candidates
     """
+    INCIDENT_CHOICES = [
+        ('CHEATING', 'Cheating Attempt'),
+        ('HEALTH', 'Health Issue'),
+        ('DISTURBANCE', 'Disturbance'),
+        ('LATE', 'Late Arrival'),
+        ('OTHER', 'Other Incident'),
+    ]
+    
     candidate = models.ForeignKey(Candidate, on_delete=models.CASCADE, related_name='attendance_records')
     session = models.ForeignKey(ExamSession, on_delete=models.CASCADE, related_name='attendance_records')
     present = models.BooleanField(default=False)
+    flagged = models.BooleanField(default=False)
+    incident_type = models.CharField(max_length=20, choices=INCIDENT_CHOICES, null=True, blank=True)
     notes = models.TextField(blank=True)
+
+
     photo = models.ImageField(upload_to='attendance_photos/', null=True, blank=True)
     marked_at = models.DateTimeField(auto_now_add=True)
     marked_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='marked_attendance')

@@ -28,3 +28,6 @@ export const ROUTES = {
   AUDIT: '/audit',
   SETTINGS: '/settings',
 };
+
+export const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api').replace(/\/$/, '');
+

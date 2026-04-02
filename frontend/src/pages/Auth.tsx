@@ -5,7 +5,7 @@ import { Button, Input } from '../components/UI';
 import { ROUTES, APP_NAME } from '../constants';
 import { motion } from 'motion/react';
 import { useAuth } from '../context/AuthContext';
-import logoIcon from '../assets/icon.svg';
+import logoIcon from '../assets/logo.png';
 
 
 export const LoginPage = () => {
@@ -53,10 +53,10 @@ export const LoginPage = () => {
 
           {/* Logo + Title */}
           <div className="flex flex-col items-center mb-5">
-            <Link to={ROUTES.HOME}>
-              <img src={logoIcon} alt={APP_NAME} className="w-[38px] h-[38px] mb-2" />
-            </Link>
-            <h2 className="text-[17px] font-extrabold text-[#1A1A1A]">Sign in to {APP_NAME}</h2>
+            <div className="flex flex-col items-center">
+              <img src={logoIcon} alt={APP_NAME} className="w-[56px] h-[56px] mb-3 rounded-2xl shadow-sm" />
+              <h2 className="text-[20px] font-bold text-text-primary tracking-tight">{APP_NAME}</h2>
+            </div>
             <p className="text-[12px] text-[#6B6B6B] mt-0.5">Enter your credentials to access your account</p>
           </div>
 
@@ -146,7 +146,7 @@ export const LoginPage = () => {
           {/* Center content */}
           <div className="relative z-10 flex flex-col items-center text-center px-8">
             <div className="w-[120px] h-[120px] rounded-full bg-[#DDD5C0] flex items-center justify-center mb-5 shadow-inner">
-              <img src={logoIcon} alt="icon" className="w-[48px] h-[48px]" />
+              <img src={logoIcon} alt="icon" className="w-[64px] h-[64px] rounded-2xl shadow-md" />
             </div>
             <h3 className="text-[18px] font-extrabold text-[#1A1A1A] mb-2">Secure Access Portal</h3>
             <p className="text-[12px] text-[#6B6B6B] leading-relaxed">

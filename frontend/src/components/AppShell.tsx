@@ -24,7 +24,7 @@ import { ROUTES, APP_NAME, cn } from "../constants";
 import { motion, AnimatePresence } from "motion/react";
 import { useAuth } from "../context/AuthContext";
 import { UserRole } from "../types";
-import dashboardLogo from "../assets/Icon.png";
+import dashboardLogo from "../assets/logo.png";
 
 type NavItem = {
   icon: React.ElementType;
@@ -212,8 +212,8 @@ export const AppShell = ({
               <div className="w-[32px] h-[32px] bg-[#8B7355] rounded-full flex items-center justify-center transition-transform group-hover:scale-105 shrink-0">
                 <img
                   src={dashboardLogo}
-                  alt={APP_NAME}
-                  className="w-[18px] h-[18px] brightness-0 invert"
+                  alt="Logo"
+                  className="w-10 h-10 rounded-xl"
                 />
               </div>
               <span className="font-extrabold text-[15px] text-[#1A1A1A] tracking-tight">
@@ -250,7 +250,6 @@ export const AppShell = ({
         </div>
       </aside>
 
-      {/* ── Mobile Menu Overlay ── */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
@@ -273,8 +272,8 @@ export const AppShell = ({
                   <div className="w-[32px] h-[32px] bg-[#8B7355] rounded-full flex items-center justify-center shrink-0">
                     <img
                       src={dashboardLogo}
-                      alt={APP_NAME}
-                      className="w-[18px] h-[18px] brightness-0 invert"
+                      alt="Logo"
+                      className="w-8 h-8 rounded-lg"
                     />
                   </div>
                   <span className="font-bold text-xl text-[#8B7355]">

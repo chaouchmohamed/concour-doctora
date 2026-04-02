@@ -21,6 +21,8 @@ import {
   ScanLine,
   Link2,
   Unlink2,
+  UserX,
+  AlertTriangle,
 } from "lucide-react";
 import { AppShell } from "../components/AppShell";
 import { Card, Button } from "../components/UI";
@@ -38,6 +40,7 @@ interface Mapping {
   scanFile: string | null;
   status: MappingStatus;
   pages: number;
+  flaggedIdentity?: boolean;
 }
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
@@ -792,17 +795,24 @@ export const AnonymizationPage = () => {
                         </td>
 
                         {/* Scan File */}
-                        <td className="p-3">
-                          {mapping.scanFile ? (
-                            <span className="text-sm text-muted flex items-center gap-1.5">
-                              <FileText size={13} className="shrink-0" />
-                              {mapping.scanFile}
-                            </span>
-                          ) : (
-                            <span className="text-sm text-muted italic">
-                              No scan
-                            </span>
-                          )}
+                        <td className="p-3 relative">
+                          <div className="flex flex-col gap-1">
+                            {mapping.scanFile ? (
+                              <span className="text-sm text-muted flex items-center gap-1.5">
+                                <FileText size={13} className="shrink-0" />
+                                {mapping.scanFile}
+                              </span>
+                            ) : (
+                              <span className="text-sm text-muted italic">
+                                No scan
+                              </span>
+                            )}
+                            {mapping.flaggedIdentity && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-md w-fit">
+                                <UserX size={10} /> IDENTITY VISIBLE
+                              </span>
+                            )}
+                          </div>
                         </td>
 
                         {/* Pages */}
@@ -880,6 +890,24 @@ export const AnonymizationPage = () => {
                                 <Link2 size={15} />
                               </Button>
                             )}
+                            {/* Flag Identity */}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className={cn("p-1.5 min-h-0", mapping.flaggedIdentity ? "text-red-600" : "text-muted hover:text-red-500")}
+                              title={mapping.flaggedIdentity ? "Remove Identity Flag" : "Flag Visible Identity"}
+                              onClick={() =>
+                                setMappings((prev) =>
+                                  prev.map((m) =>
+                                    m.id === mapping.id
+                                      ? { ...m, flaggedIdentity: !m.flaggedIdentity }
+                                      : m,
+                                  ),
+                                )
+                              }
+                            >
+                              <UserX size={15} />
+                            </Button>
                           </div>
                         </td>
                       </motion.tr>

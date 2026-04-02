@@ -463,41 +463,65 @@ class AttendanceViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated, IsSupervisor])
     def bulk(self, request):
-        """Mark attendance in bulk"""
+        """Mark attendance in bulk from PWA payload"""
         serializer = BulkAttendanceSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
         data = serializer.validated_data
-        session_id = data['session_id']
-        attendance_list = data['attendance']
+        session_info = data['session']
+        records = data['records']
         
-        created = []
-        for item in attendance_list:
+        # Resolve session
+        # Attempt to find by room name or year, or fallback to latest session
+        session = ExamSession.objects.filter(year=session_info.get('year')).first()
+        if not session:
+            session = ExamSession.objects.filter(status='ACTIVE').first()
+        if not session:
+            session = ExamSession.objects.last()
+            
+        if not session:
+            return Response({'error': 'No active exam session found'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        processed = 0
+        errors = []
+        for item in records:
+            app_num = item.get('application_number')
             try:
-                attendance, created_flag = Attendance.objects.update_or_create(
-                    candidate_id=item['candidate_id'],
-                    session_id=session_id,
+                candidate = Candidate.objects.get(application_number=app_num)
+                
+                Attendance.objects.update_or_create(
+                    candidate=candidate,
+                    session=session,
                     defaults={
-                        'present': item['present'] == 'true' or item['present'] == True,
-                        'notes': item.get('notes', ''),
+                        'present': str(item.get('present')).lower() == 'true',
+                        'flagged': str(item.get('flagged')).lower() == 'true',
+                        'incident_type': item.get('incident'),
+                        'notes': item.get('note', ''),
                         'marked_by': request.user
                     }
                 )
-                if created_flag:
-                    created.append(attendance.id)
+                processed += 1
+            except Candidate.DoesNotExist:
+                errors.append(f"Candidate {app_num} not found")
             except Exception as e:
-                pass
+                errors.append(f"Error for {app_num}: {str(e)}")
         
         log_action(
             user=request.user,
             action='MARK_ATTENDANCE',
             object_type='Attendance',
-            details={'count': len(created)},
+            details={'count': processed, 'errors': len(errors)},
             request=request
         )
         
-        return Response({'created': len(created)})
+        return Response({
+            'status': 'success',
+            'processed': processed,
+            'errors': errors,
+            'session_id': session.id
+        })
+
 
 
 # ========== COPY VIEWS ==========

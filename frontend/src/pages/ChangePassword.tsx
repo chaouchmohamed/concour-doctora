@@ -6,7 +6,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../context/AuthContext';
 import { ROUTES, APP_NAME } from '../constants';
-import logoIcon from '../assets/icon.svg';
+import logoIcon from '../assets/logo.png';
 
 // ─── Password strength helpers ────────────────────────────────────────────────
 
@@ -171,7 +171,7 @@ const ForcedChangeView = () => {
             {/* Logo + header */}
             <div className="flex flex-col items-center mb-6">
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#8B7355] to-[#6B5540] flex items-center justify-center shadow-lg mb-3">
-                <img src={logoIcon} alt={APP_NAME} className="w-7 h-7" />
+                <img src={logoIcon} alt={APP_NAME} className="w-8 h-8 rounded-lg shadow-sm" />
               </div>
             </div>
 
@@ -368,7 +368,7 @@ const VoluntaryChangeView = () => {
 
           <div>
             <div className="w-11 h-11 rounded-xl bg-[#8B7355] flex items-center justify-center shadow-lg mb-8">
-              <img src={logoIcon} alt="Logo" className="w-6 h-6" />
+              <img src={logoIcon} alt="Logo" className="w-8 h-8 rounded-lg" />
             </div>
             <div className="inline-flex items-center gap-2 bg-[#8B7355]/30 text-[#C9A97A] rounded-full px-3 py-1 text-[11px] font-semibold mb-4 border border-[#8B7355]/40">
               <ShieldCheck size={11} /> Secure Area

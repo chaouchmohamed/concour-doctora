@@ -2,9 +2,8 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, ArrowLeft, CheckCircle2, XCircle, RefreshCw, ShieldCheck, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ROUTES, APP_NAME } from '../constants';
-import { API_BASE } from '../context/AuthContext';
-import logoIcon from '../assets/icon.svg';
+import { ROUTES, APP_NAME, API_BASE } from '../constants';
+import logoIcon from '../assets/logo.png';
 
 type Step = 'email' | 'otp' | 'newPassword' | 'success';
 
@@ -278,7 +277,7 @@ export const ForgotPasswordPage = () => {
             <div className="flex flex-col items-center mb-6">
               <Link to={ROUTES.HOME}>
                 <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#8B7355] to-[#6B5540] flex items-center justify-center shadow-lg mb-3">
-                  <img src={logoIcon} alt={APP_NAME} className="w-7 h-7" />
+                  <img src={logoIcon} alt={APP_NAME} className="w-8 h-8 rounded-lg shadow-sm" />
                 </div>
               </Link>
             </div>

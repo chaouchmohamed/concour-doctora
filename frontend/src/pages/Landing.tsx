@@ -4,7 +4,7 @@ import { ArrowRight, Upload, PenLine, WifiOff, ShieldCheck, CheckCircle, EyeOff,
 import { ROUTES } from '../constants';
 import { motion } from 'motion/react';
 import doctorImg from '../assets/doctor.png';
-import iconImg from '../assets/Icon.png';
+import iconImg from '../assets/logo.png';
 export const LandingPage = () => {
   return (
     <div className="min-h-screen bg-white overflow-x-hidden font-[Inter,sans-serif]">
@@ -13,11 +13,9 @@ export const LandingPage = () => {
       <nav className="sticky top-0 z-50 bg-white border-b border-[#EBEBEB]">
         <div className="max-w-[1400px] mx-auto px-6 h-[60px] flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-2 ">
-            <div className='bg-[#8B7355] w-[30px] h-[30px] flex items-center pl-[0.5px] justify-center rounded-full'>
-              <img src={iconImg} />
-            </div>
-            <span className="font-bold text-[15px] text-[#1A1A1A] tracking-tight">ConcoursDoctor</span>
+          <div className="flex items-center gap-3">
+            <img src={iconImg} alt="ConcoursDoctor Logo" className="w-[36px] h-[36px] rounded-lg shadow-sm" />
+            <span className="font-bold text-[16px] text-[#1A1A1A] tracking-tight">ConcoursDoctor</span>
           </div>
           {/* Nav Links */}
           <div className="flex items-center gap-6">
@@ -49,25 +47,17 @@ export const LandingPage = () => {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
             >
-              {/* Badge */}
-              <div className="inline-flex items-center gap-2 mb-6 px-3 py-[1.8px] rounded-full border border-[#D4C4A0] bg-[#FAF7F2]">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#8B7355]" />
-                <span className="text-[11px] font-semibold text-[#8B7355] uppercase tracking-widest">
-                  Institutional Grade Security
-                </span>
-              </div>
-
               {/* Headline */}
               <h1 className="text-[44px]  lg:text-[52px] font-[Inter,sans-serif] font-black tracking-wider text-[#1A1A1A] leading-[1.05] mb-6">
-                Modernizing<br />
-                Medical<br />
+                Digitizing<br />
+                Doctoral<br />
                 Examinations with<br />
-                <span className="text-[#8B7355] text-[44px] font-black lg:text-[52px] font-[Inter,sans-serif] font-bold">Precision</span>
+                <span className="text-[#8B7355] text-[44px] font-black lg:text-[52px] font-[Inter,sans-serif] font-bold">Integrity</span>
               </h1>
 
               {/* Sub */}
               <p className="text-[16px] text-[#5A5A5A] leading-relaxed mb-8 max-w-[460px]">
-                The all-in-one platform for secure candidate management, offline attendance, and double-blind correction. Designed for excellence in medical education.
+                The integrated platform for managing the full lifecycle of doctoral entrance examinations — from candidate import to official deliberation. Built for Algerian higher education institutions.
               </p>
 
               {/* CTAs */}
@@ -188,18 +178,18 @@ export const LandingPage = () => {
             {[
               {
                 icon: <Upload size={22} className="text-[#6B6B6B]" />,
-                title: 'Automated Import',
-                desc: 'Bulk candidate data processing with ease. Support for multiple formats and intelligent validation to prevent data entry errors.'
+                title: 'Candidate Import',
+                desc: 'Import candidate lists from CSV/Excel files or via REST API from your pre-registration system. Automatic validation detects duplicates and missing fields before any data is committed.'
               },
               {
                 icon: <WifiOff size={22} className="text-[#6B6B6B]" />,
-                title: 'Offline-friendly PWA',
-                desc: 'Record attendance anywhere, sync when back online. Our Progressive Web App ensures reliability even in large amphitheatres with poor signal.'
+                title: 'Offline-Ready PWA',
+                desc: 'Supervisors mark attendance in real time through a touch-friendly Progressive Web App. Data is stored locally when offline and syncs automatically once connectivity is restored.'
               },
               {
                 icon: <EyeOff size={22} className="text-[#6B6B6B]" />,
-                title: 'Double-blind Correction',
-                desc: 'Ensure fairness with anonymous grading workflows. Completely detach candidate identities from their scripts during the correction phase.'
+                title: 'Double-Blind Correction',
+                desc: 'Each exam copy is anonymized with a unique encrypted code before two correctors grade it independently. Discrepancies beyond the configured threshold automatically trigger a third-corrector arbitration.'
               }
             ].map((f, i) => (
               <motion.div
@@ -226,15 +216,15 @@ export const LandingPage = () => {
         <div className="w-[97%] mx-auto px-6">
           <div className="text-center mb-14">
             <h2 className="text-[32px] font-bold text-[#1A1A1A] mb-3">The ConcoursDoctor Workflow</h2>
-            <p className="text-[15px] text-[#6B6B6B]">A standardized path from initial data collection to final academic results.</p>
+            <p className="text-[15px] text-[#6B6B6B]">A structured process from candidate data import to officially signed deliberation results.</p>
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 relative z-10">
             {[
-              { n: '1', title: 'Import', desc: 'Upload and validate candidate databases securely.', icon: <Upload size={22} className="text-[#8B7355]" /> },
-              { n: '2', title: 'Anonymize', desc: 'Generate secure barcodes and remove identity markers.', icon: <ShieldCheck size={22} className="text-[#8B7355]" /> },
-              { n: '3', title: 'Correct', desc: 'Double-blind grading with integrated conflict resolution.', icon: <PenLine size={22} className="text-[#8B7355]" /> },
-              { n: '4', title: 'Deliberate', desc: 'Final verification and official result publication.', icon: <CheckCircle size={22} className="text-[#8B7355]" /> },
+              { n: '1', title: 'Import & Plan', desc: 'Import candidates and schedule exam subjects, rooms, and call lists.', icon: <Upload size={22} className="text-[#8B7355]" /> },
+              { n: '2', title: 'Attend & Anonymize', desc: 'Track attendance in real time, then generate encrypted anonymous codes for each present candidate.', icon: <ShieldCheck size={22} className="text-[#8B7355]" /> },
+              { n: '3', title: 'Correct', desc: 'Two correctors grade each copy independently. The system detects discrepancies and manages third-corrector arbitration.', icon: <PenLine size={22} className="text-[#8B7355]" /> },
+              { n: '4', title: 'Deliberate', desc: 'Jury reviews the weighted ranking, closes deliberation, and the system publishes the signed official PV.', icon: <CheckCircle size={22} className="text-[#8B7355]" /> },
             ].map((step, i) => (
               <motion.div
                 key={i}
@@ -270,7 +260,7 @@ export const LandingPage = () => {
                 </div>                <span className="font-bold text-[15px] text-[#1A1A1A]">ConcoursDoctor</span>
               </div>
               <p className="text-[13px] text-[#6B6B6B] leading-relaxed max-w-[220px]">
-                Leading the modernisation of medical examinations through secure, efficient, and fair digital processes.
+                Digitizing doctoral entrance examinations for Algerian higher education institutions with security, fairness, and full audit traceability.
               </p>
             </div>
 
@@ -302,7 +292,7 @@ export const LandingPage = () => {
           {/* Copyright bar */}
           <div className="border-t border-[#EBEBEB] pt-6">
             <p className="text-[13px] text-[#9A9A9A] text-center">
-              © 2024 ConcoursDoctor. All rights reserved. Precision in Academic Excellence.
+              © 2026 ConcoursDoctor. All rights reserved. ESI-SBA — Sidi Bel Abbès, Algeria.
             </p>
           </div>
         </div>

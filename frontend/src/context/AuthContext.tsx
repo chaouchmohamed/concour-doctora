@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { AuthUser } from '../types';
 
-export const API_BASE = 'http://localhost:8000/api';
+import { API_BASE } from '../constants';
+export { API_BASE };
 
 interface AuthContextValue {
     user: AuthUser | null;
@@ -80,12 +81,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (res.ok) {
                 const data: AuthUser = await res.json();
                 setUser(data);
-            } else {
+                localStorage.setItem('auth_user', JSON.stringify(data));
+            } else if (res.status === 401 || res.status === 403) {
+                // Only clear if explicitly unauthorized
                 clearTokens();
+                localStorage.removeItem('auth_user');
                 setUser(null);
             }
-        } catch {
-            setUser(null);
+        } catch (err) {
+            // If it's a network error (offline), keep the local user
+            if (!navigator.onLine) {
+                const storedUser = localStorage.getItem('auth_user');
+                if (storedUser) {
+                    setUser(JSON.parse(storedUser));
+                }
+            } else {
+                // Other errors (server down vs offline) - be conservative
+                console.error('Auth verification failed:', err);
+            }
         } finally {
             setIsLoading(false);
         }
@@ -97,12 +110,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // On mount: if we have a stored token, verify it
     useEffect(() => {
+        const storedUser = localStorage.getItem('auth_user');
+        if (storedUser) {
+            setUser(JSON.parse(storedUser));
+        }
+
         if (getAccess()) {
             fetchMe();
         } else {
             setIsLoading(false);
         }
     }, [fetchMe]);
+
 
     const login = useCallback(async (username: string, password: string) => {
         const res = await fetch(`${API_BASE}/auth/login/`, {
@@ -118,8 +137,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         const data = await res.json();
         setTokens(data.access, data.refresh);
-        setUser(data.user as AuthUser);
+        const userData = data.user as AuthUser;
+        setUser(userData);
+        localStorage.setItem('auth_user', JSON.stringify(userData));
     }, []);
+
 
     /**
      * Change password (authenticated). Used for both:
@@ -166,9 +188,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             // ignore
         } finally {
             clearTokens();
+            localStorage.removeItem('auth_user');
             setUser(null);
         }
     }, []);
+
 
     return (
         <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout, changePassword, refreshUser }}>
