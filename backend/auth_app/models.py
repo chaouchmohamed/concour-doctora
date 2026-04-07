@@ -12,13 +12,12 @@ USER_ROLES = [
     ('JURY_PRESIDENT', 'Jury President'),
     ('JURY_MEMBER', 'Jury Member'),
     ('ANONYMITY_COMMISSION', 'Anonymity Commission'),
-    ('CANDIDATE', 'Candidate'),
 ]
 
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    role = models.CharField(max_length=20, choices=USER_ROLES, default='CANDIDATE')
+    role = models.CharField(max_length=20, choices=USER_ROLES, default='')
     phone = models.CharField(max_length=20, blank=True)
     department = models.CharField(max_length=100, blank=True)
     signature = models.ImageField(upload_to='signatures/', null=True, blank=True)
