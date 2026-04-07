@@ -9,17 +9,6 @@ from django.utils import timezone
 import json
 import uuid
 
-# User Roles
-USER_ROLES = [
-    ('ADMIN', 'Administrator'),
-    ('CFD_HEAD', 'CFD Head'),
-    ('COORDINATOR', 'Coordinator'),
-    ('CORRECTOR', 'Corrector'),
-    ('SUPERVISOR', 'Supervisor'),
-    ('JURY_PRESIDENT', 'Jury President'),
-    ('JURY_MEMBER', 'Jury Member'),
-    ('ANONYMITY_COMMISSION', 'Anonymity Commission'),
-]
 
 # Candidate Status
 CANDIDATE_STATUS = [
