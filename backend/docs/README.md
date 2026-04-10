@@ -14,5 +14,8 @@ Endpoint-by-endpoint matrix with methods, access roles, and notes.
 4. `PROJECT_STATUS_AND_NEXT_STEPS.md`
 What is done, what is missing, and recommended execution order.
 
-5. `../BACKEND_RUN_GUIDE.md`
+5. `MODEL_HANDOFF_CONTEXT.md`
+Cross-model continuity, current snapshot, and next execution slice.
+
+6. `../BACKEND_RUN_GUIDE.md`
 Short operational run checklist.
