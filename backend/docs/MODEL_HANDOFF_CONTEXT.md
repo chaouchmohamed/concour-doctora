@@ -1,6 +1,6 @@
 # Model Handoff Context (Token-Safe Continuity)
 
-Last updated: 2026-04-10  
+Last updated: 2026-04-12  
 Project: ConcoursDoctor backend (`backend/`)
 
 This document is for new AI models taking over when context is truncated.
@@ -52,33 +52,29 @@ Any model finishing a slice must update these sections before handoff.
 
 - Django version currently used in venv: `6.0.4`.
 - Requirement pinned in `requirements/base.txt`: `Django>=6.0.4,<6.1`.
-- Tests status (latest run): `17 passed`.
+- Tests status (latest run): `44 passed`.
 
 ## Recently completed slice
 
-- `POST /api/import/candidates/` and `POST /api/import/candidates/file/` are now real:
-  - row validation
-  - duplicate checks (payload + DB)
-  - partial import support
-  - detailed per-row error report
-  - batch status: `COMPLETED | COMPLETED_WITH_ERRORS | FAILED`
-  - file route accepts `.csv` and `.xlsx` via `openpyxl`
-- **Convocation Email Workflow:**
-  - Dynamic scheduling templating (via `send_convocation_email_task`)
-  - Integration with `NotificationOutbox`
-  - Re-entrant dispatch endpoint (`POST /api/notifications/dispatch-convocations/`)
-- In-app doc updated: `apps/integrations/README.md`.
-- Tests added in `apps/integrations/tests.py` and `apps/notifications/tests.py`.
+- **Attendance module fully implemented** (CD-FR-ATT-01 through CD-FR-ATT-07):
+  - **CD-FR-ATT-03**: `POST /api/attendance/records/{id}/undo/` — delete record (revert to unmarked); `POST /api/attendance/records/{id}/toggle/` — switch PRESENT ↔ ABSENT. Both blocked after finalization.
+  - **CD-FR-ATT-04**: `GET /api/attendance/submissions/{id}/counter/` — real-time counts of total_expected, total_marked, total_unmarked, present_count, absent_count, is_finalized.
+  - **CD-FR-ATT-05**: Already in place — absent→eliminated propagation on finalize.
+  - **CD-FR-ATT-06**: PV of Surveillance auto-generated on finalization via `apps.pv.services.generate_attendance_pv`. Currently stored as text file; needs PDF library for PDF output.
+  - **CD-FR-ATT-07**: `POST /api/attendance/submissions/{id}/import_csv/` — bulk CSV import with per-row validation, duplicate skipping, and error reporting.
+- **PV service layer**: `apps/pv/services.py` now has `generate_attendance_pv()` creating a `PVDocument` of type `ATTENDANCE`.
+- All actions audited: `ATTENDANCE_FINALIZED`, `ATTENDANCE_UNDO`, `ATTENDANCE_TOGGLE`, `ATTENDANCE_CSV_IMPORT`, `PV_GENERATED`.
+- 20 attendance tests (up from 4), 44 total tests passing.
+- In-app docs updated: `apps/attendance/README.md`.
 
 ## 4. What Is Still Missing (High Priority)
 
-1. Attendance finalization rules:
-   - all candidates marked before submit
-   - undo before submit
-   - absent -> eliminated propagation
+1. ~~Attendance finalization rules~~ — **COMPLETED** in this slice.
 2. Anonymization core:
    - CSPRNG code generation format `DOCT-YYYY-XXXX`
    - encrypted identity mapping (AES-256 policy)
+   - copy upload and association (CD-FR-ANON-03/04)
+   - PV of Anonymization (CD-FR-ANON-05)
 3. Correction workflow:
    - discrepancy auto-detection
    - coordinator alert and third-corrector arbitration
@@ -88,8 +84,9 @@ Any model finishing a slice must update these sections before handoff.
    - ranking and thresholds
    - closure prerequisites
    - anonymity lifting on close
-5. PV generation/signature/archive workflows.
+5. PV generation for remaining types (Subject Creation, Subject Lottery, Correction, Deliberation). PDF library needed (e.g., reportlab or weasyprint).
 6. Full audit coverage for sensitive actions (login/logout, grade changes, identity access, PV generation, config changes).
+7. Account lockout notification to Admin (CD-FR-AUTH-03 TODO in User model).
 
 ## 5. Mandatory Behavior for Any New Model
 
@@ -97,7 +94,6 @@ Before coding:
 
 1. Read:
    - `docs/MODEL_HANDOFF_CONTEXT.md`
-   - `docs/PROJECT_STATUS_AND_NEXT_STEPS.md`
    - relevant app files
 2. Run quick checks:
    - `git status -sb`
@@ -138,15 +134,18 @@ After coding:
 
 Next implementation slice should be:
 
-1. Attendance finalization rules:
-   - Ensuring all present/absent states are marked before allowing submission.
-   - Enforcing "Absent" propagation to "Eliminated" candidate status.
-   - Auditing the finalization.
+1. **Anonymization core** (CD-FR-ANON-01 through CD-FR-ANON-05):
+   - CSPRNG code generation in `DOCT-YYYY-XXXX` format
+   - Encrypted identity mapping stored in the anonymization schema
+   - Copy upload and anonymous code association
+   - Identity hiding for correction-phase interfaces
+   - PV of Anonymization generation
 
 Rationale:
 
-- Core requirement before Anonymization and Correction can mathematically proceed (must know the exact pool height).
-- Builds on existing attendance snapshot.
+- Attendance is now complete; anonymization is the next step in the exam lifecycle per the SRS.
+- The anonymization app scaffold already exists at `apps/anonymization/`.
+- Requires adding a PDF library (e.g., reportlab) to requirements for proper PV output.
 
 ## 8. Handoff Prompt Template (for next model)
 

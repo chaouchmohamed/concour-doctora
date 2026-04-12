@@ -15,3 +15,18 @@ class AttendanceSubmissionSerializer(serializers.ModelSerializer):
     class Meta:
         model = AttendanceSubmission
         fields = "__all__"
+
+
+class AttendanceCounterSerializer(serializers.Serializer):
+    submission_id = serializers.IntegerField()
+    schedule_id = serializers.IntegerField()
+    total_expected = serializers.IntegerField()
+    total_marked = serializers.IntegerField()
+    total_unmarked = serializers.IntegerField()
+    present_count = serializers.IntegerField()
+    absent_count = serializers.IntegerField()
+    is_finalized = serializers.BooleanField()
+
+
+class AttendanceCSVImportSerializer(serializers.Serializer):
+    file = serializers.FileField()
