@@ -74,3 +74,19 @@ class SubjectSchedule(TimeStampedModel):
     class Meta:
         ordering = ["exam_date", "start_time", "id"]
         unique_together = (("subject", "room", "exam_date", "start_time"),)
+
+
+class ExamAllocation(TimeStampedModel):
+    candidate = models.ForeignKey("candidates.Candidate", on_delete=models.CASCADE, related_name="allocations")
+    subject_schedule = models.ForeignKey(SubjectSchedule, on_delete=models.CASCADE, related_name="allocations")
+    seat_number = models.PositiveIntegerField()
+
+    class Meta:
+        ordering = ["subject_schedule", "seat_number"]
+        unique_together = (
+            ("subject_schedule", "candidate"),
+            ("subject_schedule", "seat_number"),
+        )
+
+    def __str__(self):
+        return f"{self.candidate} -> {self.subject_schedule} (Seat {self.seat_number})"

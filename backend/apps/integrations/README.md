@@ -5,6 +5,7 @@ This app currently handles candidate import integration endpoints.
 ## Base Routes
 
 - `/api/import/candidates/`
+- `/api/import/candidates/file/`
 - `/api/import/batches/`
 - `/api/import/batches/{id}/`
 
@@ -117,6 +118,22 @@ Required fields per row:
 - `202 Accepted`: import processed and batch created.
 - `401 Unauthorized`: missing/invalid token.
 - `403 Forbidden`: authenticated but not allowed role.
+
+## Endpoint: `POST /api/import/candidates/file/`
+
+### What it does
+
+- Accepts an uploaded `.csv` or `.xlsx` file.
+- Parses the file rows (first row must be headers).
+- Feeds rows through the exact same validation engine as the JSON endpoint.
+- Returns the exact same batch payload and error report format.
+
+### Requirements
+
+- Form data must have a `file` key containing the file upload.
+- Allowed extensions: `.csv` and `.xlsx`
+- Max file size: 5 MB
+- Required headers: `first_name`, `last_name`, `national_id`, `email`, `phone`, `application_number`
 
 ## Endpoint: `GET /api/import/batches/`
 

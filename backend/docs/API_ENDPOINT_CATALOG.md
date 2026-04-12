@@ -50,6 +50,7 @@ This is the practical endpoint map for frontend integration at the current stage
 | Endpoint | Methods | Access |
 |---|---|---|
 | `/api/attendance/submissions/` | GET, POST, PUT, PATCH, DELETE | ADMIN, SUPERVISOR |
+| `/api/attendance/submissions/{id}/finalize/` | POST | ADMIN, SUPERVISOR |
 | `/api/attendance/records/` | GET, POST, PUT, PATCH, DELETE | ADMIN, SUPERVISOR |
 
 ## Anonymization module
@@ -99,6 +100,7 @@ This is the practical endpoint map for frontend integration at the current stage
 |---|---|---|
 | `/api/notifications/outbox/` | GET | ADMIN only |
 | `/api/notifications/outbox/{id}/` | GET | ADMIN only |
+| `/api/notifications/dispatch-convocations/` | POST | ADMIN only |
 
 ## Integrations/import module
 

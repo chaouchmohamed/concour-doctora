@@ -3,6 +3,15 @@ from django.core.exceptions import PermissionDenied
 from django.db import models
 
 
+class ActionType(models.TextChoices):
+    CREATE = "CREATE", "Create"
+    UPDATE = "UPDATE", "Update"
+    DELETE = "DELETE", "Delete"
+    IMPORT = "IMPORT", "Import"
+    EXPORT = "EXPORT", "Export"
+    OTHER = "OTHER", "Other"
+
+
 class ImmutableQuerySet(models.QuerySet):
     def delete(self):
         raise PermissionDenied("Audit logs are immutable and cannot be deleted.")

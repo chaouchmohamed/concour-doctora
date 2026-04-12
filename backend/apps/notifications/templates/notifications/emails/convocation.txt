@@ -1,0 +1,17 @@
+Bonjour {{ candidate_name }},
+
+Vous êtes convoqué(e) aux épreuves du concours de doctorat.
+
+{% if schedules %}
+Vos épreuves :
+{% for schedule in schedules %}
+- {{ schedule.subject_name }} le {{ schedule.date }} à {{ schedule.time }} (Salle: {{ schedule.room }}, Durée: {{ schedule.duration }} min)
+{% endfor %}
+{% else %}
+Aucune épreuve n'est encore programmée.
+{% endif %}
+
+Veuillez vous présenter munis de votre convocation et d'une pièce d'identité.
+
+Cordialement,
+La Commission de Formation Doctorale

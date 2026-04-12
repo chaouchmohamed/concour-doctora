@@ -1,7 +1,9 @@
 from django.conf import settings
 from django.db import models
 
+from apps.candidates.models import Candidate
 from apps.common.models import TimeStampedModel
+from apps.examinations.models import SubjectSchedule
 
 
 class AttendanceStatus(models.TextChoices):
@@ -10,7 +12,7 @@ class AttendanceStatus(models.TextChoices):
 
 
 class AttendanceSubmission(TimeStampedModel):
-    exam_schedule_id = models.BigIntegerField()  # TODO: replace with FK once room scheduling model is stabilized.
+    exam_schedule = models.ForeignKey(SubjectSchedule, on_delete=models.CASCADE, related_name="attendance_submissions")
     submitted_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,
@@ -28,7 +30,7 @@ class AttendanceSubmission(TimeStampedModel):
 
 class AttendanceRecord(TimeStampedModel):
     submission = models.ForeignKey(AttendanceSubmission, on_delete=models.CASCADE, related_name="records")
-    candidate_id = models.BigIntegerField()  # Candidate kept as id in skeleton to avoid premature coupling.
+    candidate = models.ForeignKey(Candidate, on_delete=models.CASCADE, related_name="attendance_records")
     status = models.CharField(max_length=10, choices=AttendanceStatus.choices)
     marked_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -39,5 +41,5 @@ class AttendanceRecord(TimeStampedModel):
     )
 
     class Meta:
-        unique_together = (("submission", "candidate_id"),)
+        unique_together = (("submission", "candidate"),)
         ordering = ["id"]

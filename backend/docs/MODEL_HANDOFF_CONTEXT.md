@@ -56,37 +56,40 @@ Any model finishing a slice must update these sections before handoff.
 
 ## Recently completed slice
 
-- `POST /api/import/candidates/` is now real (not placeholder):
+- `POST /api/import/candidates/` and `POST /api/import/candidates/file/` are now real:
   - row validation
   - duplicate checks (payload + DB)
   - partial import support
   - detailed per-row error report
   - batch status: `COMPLETED | COMPLETED_WITH_ERRORS | FAILED`
-- In-app doc added: `apps/integrations/README.md`.
-- Tests added in `apps/integrations/tests.py`.
+  - file route accepts `.csv` and `.xlsx` via `openpyxl`
+- **Convocation Email Workflow:**
+  - Dynamic scheduling templating (via `send_convocation_email_task`)
+  - Integration with `NotificationOutbox`
+  - Re-entrant dispatch endpoint (`POST /api/notifications/dispatch-convocations/`)
+- In-app doc updated: `apps/integrations/README.md`.
+- Tests added in `apps/integrations/tests.py` and `apps/notifications/tests.py`.
 
 ## 4. What Is Still Missing (High Priority)
 
-1. CSV/XLSX file import path for candidates using same validation engine.
-2. Convocation email workflow once scheduling is complete.
-3. Attendance finalization rules:
+1. Attendance finalization rules:
    - all candidates marked before submit
    - undo before submit
    - absent -> eliminated propagation
-4. Anonymization core:
+2. Anonymization core:
    - CSPRNG code generation format `DOCT-YYYY-XXXX`
    - encrypted identity mapping (AES-256 policy)
-5. Correction workflow:
+3. Correction workflow:
    - discrepancy auto-detection
    - coordinator alert and third-corrector arbitration
    - final-grade computation rule per subject
-6. Deliberation engine:
+4. Deliberation engine:
    - weighted averages
    - ranking and thresholds
    - closure prerequisites
    - anonymity lifting on close
-7. PV generation/signature/archive workflows.
-8. Full audit coverage for sensitive actions (login/logout, grade changes, identity access, PV generation, config changes).
+5. PV generation/signature/archive workflows.
+6. Full audit coverage for sensitive actions (login/logout, grade changes, identity access, PV generation, config changes).
 
 ## 5. Mandatory Behavior for Any New Model
 
@@ -129,19 +132,21 @@ After coding:
 5. Current docs:
    - `docs/API_ENDPOINT_CATALOG.md`
    - `docs/API_FRONTEND_INTEGRATION.md`
-   - `docs/BACKEND_USAGE.md`
+   - `BACKEND_RUN_GUIDE.md` (root)
 
 ## 7. Recommended Next Execution Step
 
 Next implementation slice should be:
 
-1. Candidate CSV/XLSX file import endpoint reusing `apps/integrations/services.py` validation.
-2. Keep commit scope limited to integrations app + tests + integrations README.
+1. Attendance finalization rules:
+   - Ensuring all present/absent states are marked before allowing submission.
+   - Enforcing "Absent" propagation to "Eliminated" candidate status.
+   - Auditing the finalization.
 
 Rationale:
 
-- It directly satisfies SRS `CD-EI-04`, `CD-EI-05`, and `CD-FR-CAND-01`.
-- It builds on already completed API import logic with low regression risk.
+- Core requirement before Anonymization and Correction can mathematically proceed (must know the exact pool height).
+- Builds on existing attendance snapshot.
 
 ## 8. Handoff Prompt Template (for next model)
 
