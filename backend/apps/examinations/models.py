@@ -24,9 +24,21 @@ class ExamSubjectStatus(models.TextChoices):
 class ExamSession(TimeStampedModel):
     name = models.CharField(max_length=120)
     year = models.PositiveIntegerField()
-    status = models.CharField(max_length=16, choices=ExamSessionStatus.choices, default=ExamSessionStatus.DRAFT)
+    status = models.CharField(
+        max_length=16,
+        choices=ExamSessionStatus.choices,
+        default=ExamSessionStatus.DRAFT,
+    )
     starts_at = models.DateField(null=True, blank=True)
     ends_at = models.DateField(null=True, blank=True)
+    lottery_subject = models.ForeignKey(
+        "ExamSubject",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="lottery_selected_in",
+        verbose_name="Subject selected by lottery",
+    )
 
     class Meta:
         ordering = ["-year", "id"]
@@ -36,14 +48,24 @@ class ExamSession(TimeStampedModel):
 
 
 class ExamSubject(TimeStampedModel):
-    exam_session = models.ForeignKey(ExamSession, on_delete=models.CASCADE, related_name="subjects")
+    exam_session = models.ForeignKey(
+        ExamSession, on_delete=models.CASCADE, related_name="subjects"
+    )
     name = models.CharField(max_length=200)
     coefficient = models.DecimalField(max_digits=4, decimal_places=2)
     max_score = models.DecimalField(max_digits=5, decimal_places=2, default=20.00)
     pass_threshold = models.DecimalField(max_digits=5, decimal_places=2)
-    discrepancy_threshold = models.DecimalField(max_digits=5, decimal_places=2, default=3.00)
-    final_grade_rule = models.CharField(max_length=20, choices=FinalGradeRule.choices, default=FinalGradeRule.AVERAGE)
-    status = models.CharField(max_length=10, choices=ExamSubjectStatus.choices, default=ExamSubjectStatus.DRAFT)
+    discrepancy_threshold = models.DecimalField(
+        max_digits=5, decimal_places=2, default=3.00
+    )
+    final_grade_rule = models.CharField(
+        max_length=20, choices=FinalGradeRule.choices, default=FinalGradeRule.AVERAGE
+    )
+    status = models.CharField(
+        max_length=10,
+        choices=ExamSubjectStatus.choices,
+        default=ExamSubjectStatus.DRAFT,
+    )
 
     class Meta:
         ordering = ["id"]
@@ -53,7 +75,9 @@ class ExamSubject(TimeStampedModel):
 
 
 class ExamRoom(TimeStampedModel):
-    exam_session = models.ForeignKey(ExamSession, on_delete=models.CASCADE, related_name="rooms")
+    exam_session = models.ForeignKey(
+        ExamSession, on_delete=models.CASCADE, related_name="rooms"
+    )
     name = models.CharField(max_length=100)
     capacity = models.PositiveIntegerField(default=0)
 
@@ -65,8 +89,12 @@ class ExamRoom(TimeStampedModel):
 
 
 class SubjectSchedule(TimeStampedModel):
-    subject = models.ForeignKey(ExamSubject, on_delete=models.CASCADE, related_name="schedules")
-    room = models.ForeignKey(ExamRoom, on_delete=models.CASCADE, related_name="schedules")
+    subject = models.ForeignKey(
+        ExamSubject, on_delete=models.CASCADE, related_name="schedules"
+    )
+    room = models.ForeignKey(
+        ExamRoom, on_delete=models.CASCADE, related_name="schedules"
+    )
     exam_date = models.DateField()
     start_time = models.TimeField()
     duration_minutes = models.PositiveIntegerField()
@@ -77,8 +105,12 @@ class SubjectSchedule(TimeStampedModel):
 
 
 class ExamAllocation(TimeStampedModel):
-    candidate = models.ForeignKey("candidates.Candidate", on_delete=models.CASCADE, related_name="allocations")
-    subject_schedule = models.ForeignKey(SubjectSchedule, on_delete=models.CASCADE, related_name="allocations")
+    candidate = models.ForeignKey(
+        "candidates.Candidate", on_delete=models.CASCADE, related_name="allocations"
+    )
+    subject_schedule = models.ForeignKey(
+        SubjectSchedule, on_delete=models.CASCADE, related_name="allocations"
+    )
     seat_number = models.PositiveIntegerField()
 
     class Meta:

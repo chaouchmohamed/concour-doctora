@@ -12,7 +12,7 @@ Cross-platform setup guide for Linux, macOS, and Windows.
 
 ### OS-Specific Python Install
 
-**Ubuntu / Debian:**
+**Ubuntu / Debian / Kali Linux:**
 ```bash
 sudo apt update
 sudo apt install python3.12 python3.12-venv python3.12-dev
@@ -36,7 +36,7 @@ brew install python@3.12
 
 `mysqlclient` (the MySQL driver) requires C headers. Install these first:
 
-**Ubuntu / Debian:**
+**Ubuntu / Debian / Kali Linux:**
 ```bash
 sudo apt install default-libmysqlclient-dev build-essential pkg-config
 ```
@@ -115,6 +115,18 @@ pip install -r requirements\base.txt
 source .venv/bin/activate        # Windows: .venv\Scripts\Activate.ps1
 python manage.py migrate --database=default
 python manage.py migrate --database=anonymization
+python manage.py generate_encryption_key
+```
+
+The `generate_encryption_key` command outputs a Fernet key. Add it to your `.env`:
+
+```
+ANONYMIZATION_ENCRYPTION_KEY=<paste-the-key-here>
+```
+
+Then create the admin and start the server:
+
+```bash
 python manage.py create_initial_admin --email admin@concours.local --password 'StrongPass123!'
 python manage.py runserver
 ```

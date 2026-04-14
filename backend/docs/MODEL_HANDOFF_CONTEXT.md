@@ -1,6 +1,6 @@
 # Model Handoff Context (Token-Safe Continuity)
 
-Last updated: 2026-04-12  
+Last updated: 2026-04-13  
 Project: ConcoursDoctor backend (`backend/`)
 
 This document is for new AI models taking over when context is truncated.
@@ -52,30 +52,28 @@ Any model finishing a slice must update these sections before handoff.
 
 - Django version currently used in venv: `6.0.4`.
 - Requirement pinned in `requirements/base.txt`: `Django>=6.0.4,<6.1`.
-- Tests status (latest run): `44 passed`.
+- Tests status (latest run): `70 passed`.
 
 ## Recently completed slice
 
-- **Attendance module fully implemented** (CD-FR-ATT-01 through CD-FR-ATT-07):
-  - **CD-FR-ATT-03**: `POST /api/attendance/records/{id}/undo/` — delete record (revert to unmarked); `POST /api/attendance/records/{id}/toggle/` — switch PRESENT ↔ ABSENT. Both blocked after finalization.
-  - **CD-FR-ATT-04**: `GET /api/attendance/submissions/{id}/counter/` — real-time counts of total_expected, total_marked, total_unmarked, present_count, absent_count, is_finalized.
-  - **CD-FR-ATT-05**: Already in place — absent→eliminated propagation on finalize.
-  - **CD-FR-ATT-06**: PV of Surveillance auto-generated on finalization via `apps.pv.services.generate_attendance_pv`. Currently stored as text file; needs PDF library for PDF output.
-  - **CD-FR-ATT-07**: `POST /api/attendance/submissions/{id}/import_csv/` — bulk CSV import with per-row validation, duplicate skipping, and error reporting.
-- **PV service layer**: `apps/pv/services.py` now has `generate_attendance_pv()` creating a `PVDocument` of type `ATTENDANCE`.
-- All actions audited: `ATTENDANCE_FINALIZED`, `ATTENDANCE_UNDO`, `ATTENDANCE_TOGGLE`, `ATTENDANCE_CSV_IMPORT`, `PV_GENERATED`.
-- 20 attendance tests (up from 4), 44 total tests passing.
-- In-app docs updated: `apps/attendance/README.md`.
+- **Examination Planning module fully implemented** (CD-FR-EXAM-01 through EXAM-05 + PV of Subject Creation):
+  - **CD-FR-EXAM-01**: Subject creation with validation (coefficient > 0, pass_threshold <= max_score, discrepancy_threshold >= 0)
+  - **CD-FR-EXAM-02**: `POST /api/examinations/schedules/{id}/auto_allocate/` — randomly distributes candidates across rooms. `per_room = ceil(total/rooms)`. Re-run reshuffles.
+  - **CD-FR-EXAM-03**: Per-room call list via `GET .../schedules/{id}/call_list/` + consolidated per-subject via `GET .../subjects/{id}/call_list/`
+  - **CD-FR-EXAM-04**: Supervisors can read call lists digitally (CallListAccessPermission)
+  - **CD-FR-EXAM-05**: `POST /api/examinations/sessions/{id}/lottery/` — CFD Head records lottery result + generates PV of Subject Lottery. Sets `lottery_subject` FK on ExamSession.
+  - **PV of Subject Creation**: `POST /api/examinations/sessions/{id}/record_subjects/` — CFD Head records subjects submitted + generates PV.
+  - Added `lottery_subject` FK to ExamSession model (migration 0002).
+  - Added `ExamAllocationViewSet` (read-only) to urls.
+  - 14 examinations tests, 70 total tests passing.
+  - In-app docs: `apps/examinations/README.md`.
 
 ## 4. What Is Still Missing (High Priority)
 
-1. ~~Attendance finalization rules~~ — **COMPLETED** in this slice.
-2. Anonymization core:
-   - CSPRNG code generation format `DOCT-YYYY-XXXX`
-   - encrypted identity mapping (AES-256 policy)
-   - copy upload and association (CD-FR-ANON-03/04)
-   - PV of Anonymization (CD-FR-ANON-05)
-3. Correction workflow:
+1. ~~Attendance finalization rules~~ — **COMPLETED**.
+2. ~~Anonymization core~~ — **COMPLETED**.
+3. ~~Examination Planning~~ — **COMPLETED** in this slice.
+4. Correction workflow:
    - discrepancy auto-detection
    - coordinator alert and third-corrector arbitration
    - final-grade computation rule per subject
@@ -84,7 +82,7 @@ Any model finishing a slice must update these sections before handoff.
    - ranking and thresholds
    - closure prerequisites
    - anonymity lifting on close
-5. PV generation for remaining types (Subject Creation, Subject Lottery, Correction, Deliberation). PDF library needed (e.g., reportlab or weasyprint).
+5. PV generation for remaining types (Correction, Deliberation). PDF library needed (e.g., reportlab or weasyprint). Subject Creation and Lottery PVs now done (text format).
 6. Full audit coverage for sensitive actions (login/logout, grade changes, identity access, PV generation, config changes).
 7. Account lockout notification to Admin (CD-FR-AUTH-03 TODO in User model).
 
@@ -134,18 +132,19 @@ After coding:
 
 Next implementation slice should be:
 
-1. **Anonymization core** (CD-FR-ANON-01 through CD-FR-ANON-05):
-   - CSPRNG code generation in `DOCT-YYYY-XXXX` format
-   - Encrypted identity mapping stored in the anonymization schema
-   - Copy upload and anonymous code association
-   - Identity hiding for correction-phase interfaces
-   - PV of Anonymization generation
+1. **Correction workflow** (CD-FR-COR-01 through COR-09):
+   - Assign anonymized copies to 2 correctors (CD-FR-COR-01)
+   - Grade entry with score range validation (CD-FR-COR-03)
+   - Discrepancy auto-detection when both grades entered (CD-FR-COR-04/05)
+   - Third corrector arbitration (CD-FR-COR-06)
+   - Final grade computation per subject rule (CD-FR-COR-07)
+   - Grade lock after coordinator validation (CD-FR-COR-08)
+   - PV of Correction (CD-FR-COR-09)
 
 Rationale:
 
-- Attendance is now complete; anonymization is the next step in the exam lifecycle per the SRS.
-- The anonymization app scaffold already exists at `apps/anonymization/`.
-- Requires adding a PDF library (e.g., reportlab) to requirements for proper PV output.
+- Examination Planning is complete; Correction is the next step in the exam lifecycle.
+- The `CorrectionAssignment`, `CopyGrade`, `GradeDiscrepancy`, `SubjectGradeLock` models already exist.
 
 ## 8. Handoff Prompt Template (for next model)
 
