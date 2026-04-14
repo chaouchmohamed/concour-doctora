@@ -9,6 +9,8 @@ class ActionType(models.TextChoices):
     DELETE = "DELETE", "Delete"
     IMPORT = "IMPORT", "Import"
     EXPORT = "EXPORT", "Export"
+    LOGIN = "LOGIN", "Login"
+    LOGOUT = "LOGOUT", "Logout"
     OTHER = "OTHER", "Other"
 
 

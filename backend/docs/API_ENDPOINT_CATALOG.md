@@ -1,136 +1,152 @@
-# API Endpoint Catalog (Current Skeleton)
+# API Endpoint Catalog
 
-This is the practical endpoint map for frontend integration at the current stage.
+Complete endpoint map for frontend integration. Current as of 2026-04-13.
 
 ## Base
 
 - Base URL: `http://127.0.0.1:8000`
 - API prefix: `/api/`
 - Auth: `Authorization: Bearer <access_token>`
+- Swagger UI: `/api/docs/`
+- OpenAPI Schema: `/api/schema/`
 
-## Auth module
+---
 
-| Endpoint | Methods | Access | Notes |
+## Auth Module (`/api/auth/`)
+
+| Endpoint | Method | Access | SRS Ref | Description |
+|---|---|---|---|---|
+| `/api/auth/login/` | POST | Public | AUTH-01 | JWT login → `{access, refresh}` |
+| `/api/auth/refresh/` | POST | Public | AUTH-01 | Refresh access token |
+| `/api/auth/logout/` | POST | Authenticated | AUTH-02 | Blacklist refresh token |
+| `/api/auth/me/` | GET | Authenticated | — | Current user profile |
+| `/api/auth/invites/` | POST | ADMIN | AUTH-05 | Invite user (email + role) → returns invite_link |
+| `/api/auth/set-password/` | POST | Public (token) | AUTH-05 | Set password from invite token → activates account |
+| `/api/auth/users/` | GET | ADMIN | — | List users |
+| `/api/auth/users/{id}/` | GET, PATCH | ADMIN | — | Retrieve/update user |
+
+---
+
+## Health / Docs
+
+| Endpoint | Method | Access | Description |
 |---|---|---|---|
-| `/api/auth/login/` | POST | Public | Returns `access` + `refresh` tokens |
-| `/api/auth/refresh/` | POST | Public | Refreshes access token |
-| `/api/auth/logout/` | POST | Authenticated | Blacklists refresh token |
-| `/api/auth/me/` | GET | Authenticated | Returns current user profile |
-| `/api/auth/invites/` | POST | ADMIN | Creates invited user and invite token |
-| `/api/auth/set-password/` | POST | Public (token-based) | Finalizes invited account |
-| `/api/auth/users/` | GET | ADMIN | List users |
-| `/api/auth/users/{id}/` | GET, PUT, PATCH | ADMIN | Retrieve/update user |
-
-## Health/docs
-
-| Endpoint | Methods | Access | Notes |
-|---|---|---|---|
-| `/api/health/` | GET | Public | Healthcheck |
+| `/api/health/` | GET | Public | Health check |
 | `/api/docs/` | GET | Public | Swagger UI |
-| `/api/schema/` | GET | Public | OpenAPI schema |
+| `/api/schema/` | GET | Public | OpenAPI 3.0 schema |
 
-## Candidates module
+---
 
-| Endpoint | Methods | Access | Notes |
-|---|---|---|---|
-| `/api/candidates/` | GET, POST | Read roles + ADMIN write | Read roles: ADMIN, CFD_HEAD, COORDINATOR, SUPERVISOR, JURY_PRESIDENT, JURY_MEMBER |
-| `/api/candidates/{id}/` | GET, PUT, PATCH, DELETE | Read roles + ADMIN write | CRUD scaffold |
+## Candidates Module (`/api/candidates/`)
 
-## Examinations module
+| Endpoint | Method | Access | SRS Ref | Description |
+|---|---|---|---|---|
+| `/api/candidates/candidates/` | GET, POST | ADMIN write, 4 roles read | CAND-05 | CRUD (skeleton) |
+| `/api/candidates/candidates/{id}/` | GET, PUT, PATCH, DELETE | ADMIN write, 4 roles read | CAND-05 | CRUD (skeleton) |
 
-| Endpoint | Methods | Access |
-|---|---|---|
-| `/api/examinations/sessions/` | GET, POST, PUT, PATCH, DELETE | Read roles: ADMIN, CFD_HEAD, COORDINATOR, SUPERVISOR; write: ADMIN |
-| `/api/examinations/subjects/` | GET, POST, PUT, PATCH, DELETE | Same as above |
-| `/api/examinations/rooms/` | GET, POST, PUT, PATCH, DELETE | Same as above |
-| `/api/examinations/schedules/` | GET, POST, PUT, PATCH, DELETE | Same as above |
+---
 
-## Attendance module
+## Examinations Module (`/api/examinations/`)
 
-| Endpoint | Methods | Access |
-|---|---|---|
-| `/api/attendance/submissions/` | GET, POST, PUT, PATCH, DELETE | ADMIN, SUPERVISOR |
-| `/api/attendance/submissions/{id}/finalize/` | POST | ADMIN, SUPERVISOR |
-| `/api/attendance/records/` | GET, POST, PUT, PATCH, DELETE | ADMIN, SUPERVISOR |
+| Endpoint | Method | Access | SRS Ref | Description |
+|---|---|---|---|---|
+| `/api/examinations/sessions/` | CRUD | ADMIN write, 4 roles read | — | Manage exam sessions |
+| `/api/examinations/sessions/{id}/` | GET, PUT, PATCH | ADMIN write, 4 roles read | — | Session detail |
+| `/api/examinations/sessions/{id}/record_subjects/` | POST | ADMIN, CFD_HEAD | PV-01 | Record subjects submitted → generate PV of Subject Creation |
+| `/api/examinations/sessions/{id}/lottery/` | POST | ADMIN, CFD_HEAD | EXAM-05 | Record lottery result (body: `{selected_subject_id}`) → generate PV of Subject Lottery |
+| `/api/examinations/subjects/` | CRUD | ADMIN write, 4 roles read | EXAM-01 | Manage subjects (with validation) |
+| `/api/examinations/subjects/{id}/call_list/` | GET | ADMIN, CFD_HEAD, COORD, SUPER | EXAM-03/04 | Consolidated call list per subject |
+| `/api/examinations/rooms/` | CRUD | ADMIN write, 4 roles read | — | Manage rooms |
+| `/api/examinations/schedules/` | CRUD | ADMIN write, 4 roles read | EXAM-02 | Manage schedules |
+| `/api/examinations/schedules/{id}/auto_allocate/` | POST | ADMIN | EXAM-02 | Randomly allocate candidates to rooms+seats |
+| `/api/examinations/schedules/{id}/call_list/` | GET | ADMIN, CFD_HEAD, COORD, SUPER | EXAM-03/04 | Per-room call list |
+| `/api/examinations/allocations/` | GET | 4 roles read | — | View allocations (read-only) |
 
-## Anonymization module
+---
 
-| Endpoint | Methods | Access | Notes |
-|---|---|---|---|
-| `/api/anonymization/codes/` | GET, POST, PUT, PATCH, DELETE | ADMIN only | Correspondence mapping boundary |
-| `/api/anonymization/copies/` | GET, POST, PUT, PATCH, DELETE | ADMIN, ANONYMITY_COMMISSION | Copy upload/association |
+## Attendance Module (`/api/attendance/`)
 
-## Correction module
+| Endpoint | Method | Access | SRS Ref | Description |
+|---|---|---|---|---|
+| `/api/attendance/submissions/` | CRUD | ADMIN, SUPERVISOR | ATT-01 | Manage attendance submissions |
+| `/api/attendance/submissions/{id}/finalize/` | POST | ADMIN, SUPERVISOR | ATT-05 | Finalize + absent→eliminated + generate PV of Attendance |
+| `/api/attendance/submissions/{id}/counter/` | GET | ADMIN, SUPERVISOR | ATT-04 | Real-time marked/present/absent/unmarked counts |
+| `/api/attendance/submissions/{id}/import_csv/` | POST | ADMIN, SUPERVISOR | ATT-07 | Bulk CSV import (multipart: `file`) |
+| `/api/attendance/records/` | CRUD | ADMIN, SUPERVISOR | ATT-01 | Manage individual attendance records |
+| `/api/attendance/records/{id}/undo/` | POST | ADMIN, SUPERVISOR | ATT-03 | Delete record (revert to unmarked) |
+| `/api/attendance/records/{id}/toggle/` | POST | ADMIN, SUPERVISOR | ATT-03 | Switch PRESENT ↔ ABSENT |
 
-| Endpoint | Methods | Access | Notes |
-|---|---|---|---|
-| `/api/correction/assignments/` | GET, POST, PUT, PATCH, DELETE | ADMIN, COORDINATOR, CORRECTOR | Assignment scaffold |
-| `/api/correction/grades/` | GET, POST | ADMIN, COORDINATOR, CORRECTOR | Grade updates blocked once locked |
-| `/api/correction/discrepancies/` | GET, POST, PUT, PATCH, DELETE | ADMIN, COORDINATOR, CORRECTOR | Discrepancy scaffold |
-| `/api/correction/locks/` | GET, POST | ADMIN, COORDINATOR, CORRECTOR | Subject grade lock scaffold |
+---
 
-## Deliberation module
+## Anonymization Module (`/api/anonymization/`)
 
-| Endpoint | Methods | Access | Notes |
-|---|---|---|---|
-| `/api/deliberation/runs/` | GET, POST | ADMIN, JURY_PRESIDENT, JURY_MEMBER | Run lifecycle scaffold |
-| `/api/deliberation/runs/{id}/` | GET | ADMIN, JURY_PRESIDENT, JURY_MEMBER | Run detail |
-| `/api/deliberation/runs/{id}/close/` | POST | ADMIN or JURY_PRESIDENT | Audited action |
-| `/api/deliberation/runs/{id}/reopen/` | POST | ADMIN only | Audited. Requires JSON body with non-empty `reason` |
-| `/api/deliberation/results/` | GET, POST | ADMIN, JURY_PRESIDENT, JURY_MEMBER | Results scaffold |
-| `/api/deliberation/results/{id}/` | GET | ADMIN, JURY_PRESIDENT, JURY_MEMBER | Result detail |
+| Endpoint | Method | Access | SRS Ref | Description |
+|---|---|---|---|---|
+| `/api/anonymization/upload/` | POST | ADMIN, ANONYMITY_COMMISSION | ANON-03 | Upload copy + generate code (multipart: `file`, `application_number`, `session_id`) |
+| `/api/anonymization/codes/` | GET | ADMIN, COORDINATOR | ANON-02 | List anonymous codes (no encrypted IDs for non-admin) |
+| `/api/anonymization/copies/` | GET | ADMIN, ANON_COMM, COORD, CORRECTOR | ANON-04 | List exam copies (correctors see only assigned) |
+| `/api/anonymization/copies/progress/{session_id}/` | GET | Same as copies | — | Coding progress counter |
+| `/api/anonymization/copies/generate-pv/{session_id}/` | POST | Same as copies | ANON-05 | Generate PV of Anonymization |
 
-## PV module
+---
 
-| Endpoint | Methods | Access |
-|---|---|---|
-| `/api/pv/documents/` | GET, POST, PUT, PATCH, DELETE | Read roles: ADMIN, CFD_HEAD, COORDINATOR, SUPERVISOR, JURY_PRESIDENT, JURY_MEMBER, ANONYMITY_COMMISSION; write: ADMIN, CFD_HEAD, COORDINATOR, JURY_PRESIDENT |
-| `/api/pv/signatures/` | GET, POST, PUT, PATCH, DELETE | Same as PV documents |
+## Correction Module (`/api/correction/`) — SKELETON
 
-## Audit module
+| Endpoint | Method | Access | SRS Ref | Description |
+|---|---|---|---|---|
+| `/api/correction/assignments/` | CRUD | ADMIN, COORD, CORRECTOR | COR-01 | Assign correctors (skeleton) |
+| `/api/correction/grades/` | GET, POST | ADMIN, COORD, CORRECTOR | COR-03 | Enter grades (skeleton) |
+| `/api/correction/discrepancies/` | GET | ADMIN, COORD | COR-05 | View discrepancies (skeleton) |
+| `/api/correction/grade-locks/` | GET, POST | ADMIN, COORD | COR-08 | Grade locks (skeleton) |
 
-| Endpoint | Methods | Access | Notes |
-|---|---|---|---|
-| `/api/audit/logs/` | GET | ADMIN only | Read-only log access |
-| `/api/audit/logs/{id}/` | GET | ADMIN only | Read-only log detail |
+---
 
-## Notifications module
+## Deliberation Module (`/api/deliberation/`) — PARTIAL
 
-| Endpoint | Methods | Access |
-|---|---|---|
-| `/api/notifications/outbox/` | GET | ADMIN only |
-| `/api/notifications/outbox/{id}/` | GET | ADMIN only |
-| `/api/notifications/dispatch-convocations/` | POST | ADMIN only |
+| Endpoint | Method | Access | SRS Ref | Description |
+|---|---|---|---|---|
+| `/api/deliberation/runs/` | GET, POST | ADMIN, JURY_PRES, JURY_MEM | DEL-01 | Manage deliberation runs |
+| `/api/deliberation/runs/{id}/` | GET | ADMIN, JURY_PRES, JURY_MEM | — | Run detail |
+| `/api/deliberation/runs/{id}/close/` | POST | ADMIN, JURY_PRES | DEL-05 | Close deliberation |
+| `/api/deliberation/runs/{id}/reopen/` | POST | ADMIN | DEL-05 | Reopen (requires `reason` in body) |
+| `/api/deliberation/results/` | GET, POST | ADMIN, JURY_PRES, JURY_MEM | DEL-03 | Results (skeleton) |
 
-## Integrations/import module
+---
 
-| Endpoint | Methods | Access | Notes |
-|---|---|---|---|
-| `/api/import/candidates/` | POST | ADMIN only | External/API import entrypoint |
-| `/api/import/batches/` | GET | ADMIN only | Batch tracking |
-| `/api/import/batches/{id}/` | GET | ADMIN only | Batch detail |
+## PV Module (`/api/pv/`)
 
-## Deliberation reopen explicit contract
+| Endpoint | Method | Access | SRS Ref | Description |
+|---|---|---|---|---|
+| `/api/pv/documents/` | GET | ADMIN, CFD_HEAD | PV-01 | List PV documents |
+| `/api/pv/documents/{id}/` | GET | ADMIN, CFD_HEAD | PV-01 | Retrieve PV document |
+| `/api/pv/signatures/` | GET, POST | ADMIN | PV-03 | View/create signatures |
 
-Request:
+---
 
-```http
-POST /api/deliberation/runs/{id}/reopen/
-Authorization: Bearer <admin_access_token>
-Content-Type: application/json
-```
+## Audit Module (`/api/audit/`)
 
-Body:
+| Endpoint | Method | Access | SRS Ref | Description |
+|---|---|---|---|---|
+| `/api/audit/logs/` | GET | ADMIN | LOG-04 | List audit logs (paginated) |
+| `/api/audit/logs/{id}/` | GET | ADMIN | LOG-04 | Log detail |
 
-```json
-{
-  "reason": "Administrative override due to data correction"
-}
-```
+---
 
-Behavior:
+## Notifications Module (`/api/notifications/`)
 
-- `200 OK`: reopened successfully and audit entry created
-- `400 Bad Request`: reason missing or blank
-- `403 Forbidden`: caller is not ADMIN
-- `409 Conflict`: deliberation already open
+| Endpoint | Method | Access | SRS Ref | Description |
+|---|---|---|---|---|
+| `/api/notifications/outbox/` | GET | ADMIN | — | List notification outbox |
+| `/api/notifications/outbox/{id}/` | GET | ADMIN | — | Outbox detail |
+| `/api/notifications/dispatch-convocations/` | POST | ADMIN | CAND-04 | Dispatch convocation emails to candidates |
+
+---
+
+## Integrations Module (`/api/import/`)
+
+| Endpoint | Method | Access | SRS Ref | Description |
+|---|---|---|---|---|
+| `/api/import/candidates/` | POST | ADMIN | CAND-01 | JSON import (array of candidate rows) |
+| `/api/import/candidates/file/` | POST | ADMIN | CAND-01 | File import (CSV/XLSX, multipart: `file`) |
+| `/api/import/batches/` | GET | ADMIN | — | List import batches |
+| `/api/import/batches/{id}/` | GET | ADMIN | — | Batch detail |

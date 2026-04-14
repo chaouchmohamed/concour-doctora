@@ -33,6 +33,7 @@ from .services import (
 class UploadCopyAndCodeView(APIView):
     permission_classes = [IsAuthenticated, AnonymizationWritePermission]
     parser_classes = [MultiPartParser]
+    serializer_class = UploadCopyAndCodeSerializer
 
     @extend_schema(
         summary="Upload exam copy and generate anonymous code",
@@ -68,7 +69,7 @@ class AnonymousCodeViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_serializer_class(self):
         user = self.request.user
-        if user.role == "ADMIN":
+        if hasattr(user, "role") and user.role == "ADMIN":
             return AnonymousCodeAdminSerializer
         return AnonymousCodeSerializer
 
@@ -79,7 +80,7 @@ class ExamCopyViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_serializer_class(self):
         user = self.request.user
-        if user.role == "ADMIN":
+        if hasattr(user, "role") and user.role == "ADMIN":
             return ExamCopyAdminSerializer
         return ExamCopySerializer
 

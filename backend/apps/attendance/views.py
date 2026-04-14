@@ -14,6 +14,8 @@ from .permissions import AttendanceAccessPermission
 from .serializers import (
     AttendanceCounterSerializer,
     AttendanceCSVImportSerializer,
+    AttendanceCSVImportResultSerializer,
+    AttendanceFinalizeResponseSerializer,
     AttendanceRecordSerializer,
     AttendanceSubmissionSerializer,
 )
@@ -33,19 +35,23 @@ class AttendanceSubmissionViewSet(viewsets.ModelViewSet):
 
     @extend_schema(
         summary="Finalize attendance submission",
-        description="Validates that all allocated candidates are marked and propagates ABSENT status to ELIMINATED.",
-        responses={200: AttendanceSubmissionSerializer, 400: None},
+        description="Validates that all allocated candidates are marked, propagates ABSENT→ELIMINATED, and generates PV of Attendance.",
+        request=None,
+        responses={200: AttendanceFinalizeResponseSerializer, 400: None},
     )
     @action(detail=True, methods=["post"])
     def finalize(self, request, pk=None):
         submission = self.get_object()
         try:
             submission, pv = finalize_attendance(submission, request.user)
-            return Response({
-                "submission": self.get_serializer(submission).data,
-                "pv_document_id": pv.id,
-                "pv_document_identifier": pv.document_identifier,
-            }, status=status.HTTP_200_OK)
+            return Response(
+                {
+                    "submission": self.get_serializer(submission).data,
+                    "pv_document_id": pv.id,
+                    "pv_document_identifier": pv.document_identifier,
+                },
+                status=status.HTTP_200_OK,
+            )
         except ValidationError as e:
             return Response(e.detail, status=status.HTTP_400_BAD_REQUEST)
 
@@ -64,24 +70,31 @@ class AttendanceSubmissionViewSet(viewsets.ModelViewSet):
         summary="Import attendance from CSV file",
         description="Bulk-import attendance records from a CSV file. Columns: application_number, status.",
         request=AttendanceCSVImportSerializer,
-        responses={200: None, 400: None},
+        responses={200: AttendanceCSVImportResultSerializer, 400: None},
     )
     @action(detail=True, methods=["post"], parser_classes=[MultiPartParser])
     def import_csv(self, request, pk=None):
         submission = self.get_object()
         file_obj = request.data.get("file")
         if not file_obj:
-            return Response({"detail": "No file provided."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "No file provided."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         try:
             decoded = file_obj.read().decode("utf-8")
         except UnicodeDecodeError:
-            return Response({"detail": "File must be UTF-8 encoded CSV."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "File must be UTF-8 encoded CSV."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         reader = csv.DictReader(io.StringIO(decoded))
         rows = list(reader)
         if not rows:
-            return Response({"detail": "CSV file is empty."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "CSV file is empty."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         try:
             result = import_attendance_csv(submission, rows, request.user)
@@ -92,13 +105,21 @@ class AttendanceSubmissionViewSet(viewsets.ModelViewSet):
 
 
 class AttendanceRecordViewSet(viewsets.ModelViewSet):
-    queryset = AttendanceRecord.objects.select_related("submission", "candidate").all().order_by("id")
+    queryset = (
+        AttendanceRecord.objects.select_related("submission", "candidate")
+        .all()
+        .order_by("id")
+    )
     serializer_class = AttendanceRecordSerializer
     permission_classes = [IsAuthenticated, AttendanceAccessPermission]
 
     def _check_submission_finalized(self, submission):
         if submission.is_finalized:
-            raise ValidationError({"detail": "Cannot modify records: the attendance submission is already finalized."})
+            raise ValidationError(
+                {
+                    "detail": "Cannot modify records: the attendance submission is already finalized."
+                }
+            )
 
     def perform_create(self, serializer):
         self._check_submission_finalized(serializer.validated_data["submission"])

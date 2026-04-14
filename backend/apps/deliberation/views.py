@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -26,6 +27,11 @@ class DeliberationRunViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, DeliberationAccessPermission]
     http_method_names = ["get", "post", "head", "options"]
 
+    @extend_schema(
+        summary="Close deliberation",
+        description="ADMIN or JURY_PRESIDENT can close. Irreversible except via reopen.",
+        responses={200: DeliberationRunSerializer},
+    )
     @action(detail=True, methods=["post"], url_path="close")
     def close_deliberation(self, request, pk=None):
         deliberation = self.get_object()
@@ -39,7 +45,9 @@ class DeliberationRunViewSet(viewsets.ModelViewSet):
 
         if deliberation.status == DeliberationStatus.CLOSED:
             return Response(
-                {"detail": "Deliberation is already closed and cannot be reopened from API."},
+                {
+                    "detail": "Deliberation is already closed and cannot be reopened from API."
+                },
                 status=status.HTTP_409_CONFLICT,
             )
 
@@ -48,7 +56,9 @@ class DeliberationRunViewSet(viewsets.ModelViewSet):
         deliberation.status = DeliberationStatus.CLOSED
         deliberation.closed_at = timezone.now()
         deliberation.closed_by = user
-        deliberation.save(update_fields=["status", "closed_at", "closed_by", "updated_at"])
+        deliberation.save(
+            update_fields=["status", "closed_at", "closed_by", "updated_at"]
+        )
 
         log_action(
             user=user,
@@ -63,14 +73,18 @@ class DeliberationRunViewSet(viewsets.ModelViewSet):
             },
         )
 
-        return Response(self.get_serializer(deliberation).data, status=status.HTTP_200_OK)
+        return Response(
+            self.get_serializer(deliberation).data, status=status.HTTP_200_OK
+        )
 
+    @extend_schema(
+        summary="Reopen deliberation (admin only)",
+        description="Admin-only emergency endpoint. Requires 'reason' in request body.",
+        request=None,
+        responses={200: DeliberationRunSerializer},
+    )
     @action(detail=True, methods=["post"], url_path="reopen")
     def reopen_deliberation(self, request, pk=None):
-        """
-        Admin-only emergency endpoint.
-        This is intentionally explicit and audited because it reopens a closed deliberation.
-        """
         deliberation = self.get_object()
         user = request.user
 
@@ -93,13 +107,17 @@ class DeliberationRunViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        previous_closed_at = deliberation.closed_at.isoformat() if deliberation.closed_at else None
+        previous_closed_at = (
+            deliberation.closed_at.isoformat() if deliberation.closed_at else None
+        )
         previous_closed_by = deliberation.closed_by_id
 
         deliberation.status = DeliberationStatus.OPEN
         deliberation.closed_at = None
         deliberation.closed_by = None
-        deliberation.save(update_fields=["status", "closed_at", "closed_by", "updated_at"])
+        deliberation.save(
+            update_fields=["status", "closed_at", "closed_by", "updated_at"]
+        )
 
         log_action(
             user=user,
@@ -119,11 +137,17 @@ class DeliberationRunViewSet(viewsets.ModelViewSet):
 
         # TODO: add operational workflow safeguards once deliberation engine is implemented
         # (e.g., recalculate ranking snapshots, regenerate provisional exports).
-        return Response(self.get_serializer(deliberation).data, status=status.HTTP_200_OK)
+        return Response(
+            self.get_serializer(deliberation).data, status=status.HTTP_200_OK
+        )
 
 
 class DeliberationResultViewSet(viewsets.ModelViewSet):
-    queryset = DeliberationResult.objects.select_related("deliberation").all().order_by("rank", "id")
+    queryset = (
+        DeliberationResult.objects.select_related("deliberation")
+        .all()
+        .order_by("rank", "id")
+    )
     serializer_class = DeliberationResultSerializer
     permission_classes = [IsAuthenticated, DeliberationAccessPermission]
     http_method_names = ["get", "post", "head", "options"]

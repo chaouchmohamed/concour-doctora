@@ -30,3 +30,15 @@ class AttendanceCounterSerializer(serializers.Serializer):
 
 class AttendanceCSVImportSerializer(serializers.Serializer):
     file = serializers.FileField()
+
+
+class AttendanceCSVImportResultSerializer(serializers.Serializer):
+    created = serializers.IntegerField()
+    skipped_duplicates = serializers.IntegerField()
+    errors = serializers.ListField(child=serializers.DictField())
+
+
+class AttendanceFinalizeResponseSerializer(serializers.Serializer):
+    submission = AttendanceSubmissionSerializer()
+    pv_document_id = serializers.IntegerField()
+    pv_document_identifier = serializers.CharField()

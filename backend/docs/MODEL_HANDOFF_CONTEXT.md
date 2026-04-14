@@ -52,21 +52,21 @@ Any model finishing a slice must update these sections before handoff.
 
 - Django version currently used in venv: `6.0.4`.
 - Requirement pinned in `requirements/base.txt`: `Django>=6.0.4,<6.1`.
-- Tests status (latest run): `70 passed`.
+- Tests status (latest run): `95 passed`.
 
 ## Recently completed slice
 
-- **Examination Planning module fully implemented** (CD-FR-EXAM-01 through EXAM-05 + PV of Subject Creation):
-  - **CD-FR-EXAM-01**: Subject creation with validation (coefficient > 0, pass_threshold <= max_score, discrepancy_threshold >= 0)
-  - **CD-FR-EXAM-02**: `POST /api/examinations/schedules/{id}/auto_allocate/` — randomly distributes candidates across rooms. `per_room = ceil(total/rooms)`. Re-run reshuffles.
-  - **CD-FR-EXAM-03**: Per-room call list via `GET .../schedules/{id}/call_list/` + consolidated per-subject via `GET .../subjects/{id}/call_list/`
-  - **CD-FR-EXAM-04**: Supervisors can read call lists digitally (CallListAccessPermission)
-  - **CD-FR-EXAM-05**: `POST /api/examinations/sessions/{id}/lottery/` — CFD Head records lottery result + generates PV of Subject Lottery. Sets `lottery_subject` FK on ExamSession.
-  - **PV of Subject Creation**: `POST /api/examinations/sessions/{id}/record_subjects/` — CFD Head records subjects submitted + generates PV.
-  - Added `lottery_subject` FK to ExamSession model (migration 0002).
-  - Added `ExamAllocationViewSet` (read-only) to urls.
-  - 14 examinations tests, 70 total tests passing.
-  - In-app docs: `apps/examinations/README.md`.
+- **Accounts/Auth module fully implemented** (CD-FR-AUTH-01 through AUTH-05 + CD-FR-LOG-02/03):
+  - **CD-FR-AUTH-01**: JWT login with 8h access / 24h refresh, token rotation + blacklist. Working.
+  - **CD-FR-AUTH-02**: Logout blacklists refresh token. Working.
+  - **CD-FR-AUTH-03**: 3 failed logins → 15min lockout. `notify_admin_lockout_task` now **implemented** (emails all active ADMIN users).
+  - **CD-FR-AUTH-04**: 8 RBAC roles enforced per-module.
+  - **CD-FR-AUTH-05**: Invite-only onboarding: Admin invites user (email + role) → email with invite link → user sets password → account activated. `send_invite_email_task` now **implemented** (sends real SMTP email).
+  - **CD-FR-LOG-02**: Login/logout events now logged with IP address capture (`X-Forwarded-For` aware).
+  - **CD-FR-LOG-03**: Added `ActionType.LOGIN` and `ActionType.LOGOUT` to audit choices.
+  - **`log_event()`** now accepts optional `ip_address` parameter.
+  - 26 accounts tests (was 1), 95 total tests passing.
+  - In-app docs: `apps/accounts/README.md`.
 
 ## 4. What Is Still Missing (High Priority)
 
@@ -83,8 +83,8 @@ Any model finishing a slice must update these sections before handoff.
    - closure prerequisites
    - anonymity lifting on close
 5. PV generation for remaining types (Correction, Deliberation). PDF library needed (e.g., reportlab or weasyprint). Subject Creation and Lottery PVs now done (text format).
-6. Full audit coverage for sensitive actions (login/logout, grade changes, identity access, PV generation, config changes).
-7. Account lockout notification to Admin (CD-FR-AUTH-03 TODO in User model).
+6. ~~Full audit coverage for auth events~~ — **COMPLETED** (login/logout + IP capture).
+7. Account lockout notification to Admin — **COMPLETED** (`notify_admin_lockout_task`).
 
 ## 5. Mandatory Behavior for Any New Model
 

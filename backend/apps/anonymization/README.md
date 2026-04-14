@@ -5,8 +5,7 @@ Manages anonymous code generation, encrypted identity mapping, and exam copy ass
 ## Core Models
 
 - **AnonymousCode**: `code` (unique, format `DOCT-YYYY-XXXX`), `candidate_id_encrypted` (Fernet-encrypted), `exam_session_id`, `generated_at`
-- **ExamCopy**: `anonymous_code` (FK), `file` (scanned copy), `uploaded_by_user_id`, `qr_detected_code`
-
+- **ExamCopy**: `anonymous_code` (FK), `file` (scanned copy), `uploaded_by_user_id`
 All models live in the **anonymization database** (separate schema) via `AnonymizationRouter`.
 
 ## Business Rules (SRS CD-FR-ANON-01 to 05)

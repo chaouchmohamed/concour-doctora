@@ -14,19 +14,15 @@ from .tasks import send_convocation_email_task
 
 
 class DispatchConvocationsView(APIView):
-    """
-    Trigger convocation emails for all REGISTERED candidates who haven't
-    already had a successful (SENT or PENDING) email queued for them.
-    """
     permission_classes = [IsAuthenticated, NotificationAdminOnlyPermission]
+    serializer_class = NotificationOutboxSerializer
 
     @extend_schema(
         summary="Dispatch convocation emails",
         description="Enqueues Celery tasks to send emails to all REGISTERED candidates without an existing outbox record.",
         responses={
             202: inline_serializer(
-                name="DispatchResponse",
-                fields={"detail": serializers.CharField()}
+                name="DispatchResponse", fields={"detail": serializers.CharField()}
             )
         },
     )
@@ -36,11 +32,11 @@ class DispatchConvocationsView(APIView):
             status__in=[NotificationStatus.PENDING, NotificationStatus.SENT],
         )
 
-        candidates = Candidate.objects.filter(
-            status=CandidateStatus.REGISTERED
-        ).annotate(
-            has_email=Exists(active_outbox)
-        ).filter(has_email=False)
+        candidates = (
+            Candidate.objects.filter(status=CandidateStatus.REGISTERED)
+            .annotate(has_email=Exists(active_outbox))
+            .filter(has_email=False)
+        )
 
         enqueued_count = 0
         for candidate in candidates:
@@ -53,7 +49,9 @@ class DispatchConvocationsView(APIView):
         )
 
 
-class NotificationOutboxViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+class NotificationOutboxViewSet(
+    mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet
+):
     queryset = NotificationOutbox.objects.all().order_by("-created_at")
     serializer_class = NotificationOutboxSerializer
     permission_classes = [IsAuthenticated, NotificationAdminOnlyPermission]
