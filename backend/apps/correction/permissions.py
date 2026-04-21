@@ -8,4 +8,24 @@ class CorrectionAccessPermission(BasePermission):
         user = request.user
         if not user or not user.is_authenticated:
             return False
-        return user.role in {RoleChoices.ADMIN, RoleChoices.COORDINATOR, RoleChoices.CORRECTOR}
+        return user.role in {
+            RoleChoices.ADMIN,
+            RoleChoices.COORDINATOR,
+            RoleChoices.CORRECTOR,
+        }
+
+
+class CoordinatorOrAdminPermission(BasePermission):
+    def has_permission(self, request, view):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        return user.role in {RoleChoices.ADMIN, RoleChoices.COORDINATOR}
+
+
+class CorrectorOnlyPermission(BasePermission):
+    def has_permission(self, request, view):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        return user.role == RoleChoices.CORRECTOR

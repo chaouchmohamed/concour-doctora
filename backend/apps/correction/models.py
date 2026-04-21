@@ -22,7 +22,10 @@ class CorrectionAssignment(TimeStampedModel):
 
     class Meta:
         ordering = ["id"]
-        unique_together = (("anonymous_code", "exam_subject_id", "order"),)
+        unique_together = (
+            ("anonymous_code", "exam_subject_id", "order"),
+            ("anonymous_code", "exam_subject_id", "corrector"),
+        )
 
 
 class CopyGrade(TimeStampedModel):

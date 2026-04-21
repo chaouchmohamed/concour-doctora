@@ -90,12 +90,14 @@ class ExamCopyViewSet(viewsets.ReadOnlyModelViewSet):
         if user.role == RoleChoices.CORRECTOR:
             from apps.correction.models import CorrectionAssignment
 
-            try:
-                assigned_codes = CorrectionAssignment.objects.filter(
-                    corrector=user
-                ).values_list("anonymous_code", flat=True)
-                qs = qs.filter(anonymous_code__code__in=list(assigned_codes))
-            except Exception:
+            assigned_codes = list(
+                CorrectionAssignment.objects.filter(corrector=user).values_list(
+                    "anonymous_code", flat=True
+                )
+            )
+            if assigned_codes:
+                qs = qs.filter(anonymous_code__code__in=assigned_codes)
+            else:
                 qs = qs.none()
         return qs
 

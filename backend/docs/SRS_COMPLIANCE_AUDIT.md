@@ -62,29 +62,29 @@ _Last updated: 2026-04-13_
 
 | SRS ID | Requirement | Status | Detail |
 |---|---|---|---|
-| CD-FR-COR-01 | Assign 2 correctors per copy | **STUB** | `CorrectionAssignment` model exists. Bare CRUD. No business logic (must enforce exactly 2). |
-| CD-FR-COR-02 | Corrector sees only their copies | **MISSING** | No queryset filtering by corrector. |
-| CD-FR-COR-03 | Grade entry with score range enforcement | **PARTIAL** | `CopyGrade` model exists. Serializer has grade-lock check. No score range validation (0 to max_score). |
-| CD-FR-COR-04 | Auto-calculate absolute difference | **MISSING** | No auto-detection on second grade entry. |
-| CD-FR-COR-05 | Discrepancy alert to coordinator | **MISSING** | `GradeDiscrepancy` model exists. No trigger/creation logic. |
-| CD-FR-COR-06 | Third corrector arbitration | **MISSING** | No endpoint, no UI-facing logic. |
-| CD-FR-COR-07 | Final grade computation rule | **MISSING** | `FinalGradeRule` enum exists on `ExamSubject`. No computation service. |
-| CD-FR-COR-08 | Grade lock after coordinator validation | **PARTIAL** | `SubjectGradeLock` model + serializer check exists. No coordinator "validate all" action. |
-| CD-FR-COR-09 | PV of Correction | **MISSING** | No service. |
+| CD-FR-COR-01 | Assign 2 correctors per copy | **BUILT** | `assign_correctors()` service + `POST /api/correction/assignments/assign/`. Enforces exactly 2 correctors per copy, round-robin distribution across corrector pairs. |
+| CD-FR-COR-02 | Corrector sees only their copies | **BUILT** | `GET /api/correction/assignments/` filtered by requesting corrector. `GET /api/correction/my-copies/` returns copy scan file URLs for assigned copies only (cross-DB safe). |
+| CD-FR-COR-03 | Grade entry with score range enforcement | **BUILT** | `submit_grade()` validates 0 <= grade <= ExamSubject.max_score. Also validates: corrector is assigned, subject not locked, no duplicate. `POST /api/correction/grades/submit/` |
+| CD-FR-COR-04 | Auto-calculate absolute difference | **BUILT** | `_check_for_discrepancy()` runs automatically after each grade submission. |
+| CD-FR-COR-05 | Discrepancy alert to coordinator | **BUILT** | `GradeDiscrepancy` auto-created when difference > threshold. Audit logged. Coordinator views via `GET /api/correction/discrepancies/` |
+| CD-FR-COR-06 | Third corrector arbitration | **BUILT** | `assign_third_corrector()` creates THIRD order assignment. `submit_third_grade()` auto-resolves discrepancy. |
+| CD-FR-COR-07 | Final grade computation rule | **BUILT** | `compute_final_grades()` supports AVERAGE, MEDIAN, THIRD_CORRECTOR rules. `POST /api/correction/compute-final-grades/` |
+| CD-FR-COR-08 | Grade lock after coordinator validation | **BUILT** | `lock_subject_grades()` validates: all final grades computed, no unresolved discrepancies. Sets ExamSubject.status=LOCKED. `POST /api/correction/locks/lock-subject/` |
+| CD-FR-COR-09 | PV of Correction | **BUILT** | `generate_correction_pv()` creates text PV with all grades, discrepancies, and final grades. Requires lock. `POST /api/correction/generate-pv/` |
 
 ### Electronic Deliberation (CD-FR-DEL-01 to 09)
 
 | SRS ID | Requirement | Status | Detail |
 |---|---|---|---|
-| CD-FR-DEL-01 | Jury-only access after all subjects validated | **PARTIAL** | Permission class allows JURY roles. No prerequisite check (subjects validated). |
-| CD-FR-DEL-02 | Weighted average computation | **MISSING** | No service. |
-| CD-FR-DEL-03 | Provisional ranking (anonymous codes) | **MISSING** | No ranking service. |
-| CD-FR-DEL-04 | Admissibility threshold (ADMITTED/WAITING/REJECTED) | **MISSING** | `DeliberationOutcome` enum exists. No auto-flagging. |
-| CD-FR-DEL-05 | Close deliberation (irreversible) | **PARTIAL** | `close_deliberation` action exists. Missing prerequisite checks. Only 3 tests (reopen only). |
-| CD-FR-DEL-06 | Anonymity lifting on closure | **MISSING** | No logic. |
-| CD-FR-DEL-07 | PV of Deliberation PDF | **MISSING** | No service. |
-| CD-FR-DEL-08 | Electronic signatures on PV | **MISSING** | `PVSignature` model exists. No signing endpoint. |
-| CD-FR-DEL-09 | Archive + immutability after closure | **MISSING** | No archival service. |
+| CD-FR-DEL-01 | Jury-only access after all subjects validated | **BUILT** | `DeliberationAccessPermission` (ADMIN + JURY_PRESIDENT + JURY_MEMBER). Compute endpoint checks all subjects locked. |
+| CD-FR-DEL-02 | Weighted average computation | **BUILT** | `compute_deliberation_results()` computes weighted_average = sum(grade * coeff) / sum(coeff) per code across all subjects. |
+| CD-FR-DEL-03 | Provisional ranking (anonymous codes) | **BUILT** | Results ranked by weighted_average DESC. Candidate_id null until close. |
+| CD-FR-DEL-04 | Admissibility threshold (ADMITTED/WAITING/REJECTED) | **BUILT** | ADMITTED if >= admission_threshold, WAITING_LIST if rank within admitted_count + waiting_list_capacity, REJECTED otherwise. |
+| CD-FR-DEL-05 | Close deliberation (irreversible) | **BUILT** | `close_deliberation()` with prerequisite checks (results exist). Reopen blocked if archived. |
+| CD-FR-DEL-06 | Anonymity lifting on closure | **BUILT** | `_lift_anonymity()` decrypts candidate_id from AnonymousCode.candidate_id_encrypted on close. |
+| CD-FR-DEL-07 | PV of Deliberation PDF | **BUILT** | `generate_deliberation_pv()` creates text PV with all results + identities. |
+| CD-FR-DEL-08 | Electronic signatures on PV | **BUILT** | `sign_pv()` creates PVSignature. Duplicate prevented. ADMIN/JURY_PRESIDENT/JURY_MEMBER can sign. |
+| CD-FR-DEL-09 | Archive + immutability after closure | **BUILT** | `archive_deliberation()` sets is_archived=True. Archived runs cannot be reopened. |
 
 ### PV Management (CD-FR-PV-01 to 03)
 
@@ -115,8 +115,8 @@ _Last updated: 2026-04-13_
 | **audit** | 1 | 46 lines | 3/4 LOG | **Near complete** |
 | **accounts** | 1 | 45 lines | 4/5 AUTH | **Needs tests + lockout email** |
 | **pv** | 0 (indirect via ATT) | 68 lines | 1/6 PV types | **Early** |
-| **deliberation** | 3 | 0 | 2/9 DEL | **Early** |
-| **correction** | 0 | 0 | 1/9 COR | **Scaffold only** |
+| **deliberation** | 28 | 280 lines | 9/9 DEL | **Complete** |
+| **correction** | 54 | 765 lines | 9/9 COR | **Complete** |
 | **anonymization** | 0 | 0 | 0/5 ANON | **Scaffold only** |
 | **examinations** | 0 | 0 | 0/5 EXAM | **Scaffold only** |
 | **candidates** | 0 | 0 | 0/1 CAND-05 | **Scaffold only** |
@@ -195,23 +195,23 @@ Import ✓ → Plan ✗ → Attendance ✓ → Anonymize ✗ → Correct ✗ →
 
 ### correction
 
-- **Models**: REAL — `CorrectionAssignment`, `CopyGrade`, `GradeDiscrepancy`, `SubjectGradeLock`
-- **Services**: STUB — placeholder comment
-- **Views**: PARTIAL — `CopyGradeViewSet` and `SubjectGradeLockViewSet` restrict HTTP methods
-- **Tests**: STUB — `PlaceholderTestCase.test_placeholder`
-- **Permissions**: PARTIAL — ADMIN + COORDINATOR + CORRECTOR, no granularity
-- **Serializers**: PARTIAL — `CopyGradeSerializer` has grade-lock validation
-- **README**: None
+- **Models**: REAL — `CorrectionAssignment` (unique_together for order + corrector), `CopyGrade`, `GradeDiscrepancy`, `SubjectGradeLock`
+- **Services**: REAL — `assign_correctors()`, `get_corrector_assignments()`, `get_corrector_copies()`, `delete_assignments()`, `submit_grade()`, `assign_third_corrector()`, `submit_third_grade()`, `compute_final_grades()`, `lock_subject_grades()`, `generate_correction_pv()`
+- **Views**: REAL — `CorrectionAssignmentViewSet` (assign, delete-subject, filtered list), `CorrectorCopyListView` (my-copies), `CopyGradeViewSet` (submit action, filtered list), `GradeDiscrepancyViewSet` (assign-third-corrector action), `SubjectGradeLockViewSet` (lock-subject action), `ComputeFinalGradesView`, `GenerateCorrectionPVView`
+- **Tests**: REAL — 54 tests across 12 classes
+- **Permissions**: REAL — `CorrectionAccessPermission`, `CoordinatorOrAdminPermission`, `CorrectorOnlyPermission`
+- **Serializers**: REAL — `CorrectionAssignmentCreateSerializer`, `CorrectionAssignmentReadSerializer`, `CorrectorCopySerializer`, `AssignResultSerializer`, `CopyGradeCreateSerializer`, `CopyGradeReadSerializer`, `AssignThirdCorrectorSerializer`, `ComputeFinalGradesSerializer`, `ComputeFinalGradesResultSerializer`, `LockSubjectGradesSerializer`, `GenerateCorrectionPVSerializer`
+- **README**: REAL — full SRS status map + endpoint table
 
 ### deliberation
 
-- **Models**: REAL — `DeliberationRun`, `DeliberationResult` with outcome enum
-- **Services**: STUB — placeholder comment
-- **Views**: REAL — `close_deliberation` + `reopen_deliberation` actions with audit logging
-- **Tests**: PARTIAL — 3 tests (reopen only)
-- **Permissions**: PARTIAL — loose gate at ViewSet level, stricter inline in actions
-- **Serializers**: STUB — `fields = "__all__"`, no validation
-- **README**: None
+- **Models**: REAL — `DeliberationRun` (admission_threshold, waiting_list_capacity, is_archived), `DeliberationResult` (candidate_id populated on close)
+- **Services**: REAL — `compute_deliberation_results()`, `close_deliberation()`, `_lift_anonymity()`, `generate_deliberation_pv()`, `sign_pv()`, `archive_deliberation()`
+- **Views**: REAL — `DeliberationRunViewSet` (compute, close, reopen, generate-pv, archive actions), `DeliberationResultViewSet` (read-only), `SignDeliberationPVView`
+- **Tests**: REAL — 28 tests across 4 classes
+- **Permissions**: REAL — `DeliberationAccessPermission`, `JuryPresidentOrAdminPermission`
+- **Serializers**: REAL — `DeliberationRunSerializer`, `DeliberationResultSerializer` (with conditional candidate_info), `ComputeDeliberationSerializer`, `SignPVSerializer`
+- **README**: REAL — full SRS status map + endpoint table
 
 ### pv
 

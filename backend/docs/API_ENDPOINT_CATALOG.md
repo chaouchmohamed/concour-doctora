@@ -90,26 +90,38 @@ Complete endpoint map for frontend integration. Current as of 2026-04-13.
 
 ---
 
-## Correction Module (`/api/correction/`) — SKELETON
+## Correction Module (`/api/correction/`)
 
 | Endpoint | Method | Access | SRS Ref | Description |
 |---|---|---|---|---|
-| `/api/correction/assignments/` | CRUD | ADMIN, COORD, CORRECTOR | COR-01 | Assign correctors (skeleton) |
-| `/api/correction/grades/` | GET, POST | ADMIN, COORD, CORRECTOR | COR-03 | Enter grades (skeleton) |
-| `/api/correction/discrepancies/` | GET | ADMIN, COORD | COR-05 | View discrepancies (skeleton) |
-| `/api/correction/grade-locks/` | GET, POST | ADMIN, COORD | COR-08 | Grade locks (skeleton) |
+| `/api/correction/assignments/` | GET | ADMIN, COORD, CORRECTOR | COR-01/02 | List assignments (corrector sees own only, admin/coord sees all; `?subject_id=` filter) |
+| `/api/correction/assignments/assign/` | POST | ADMIN, COORDINATOR | COR-01 | Bulk assign 2 correctors per copy for a subject (`{subject_id, corrector_ids}`) |
+| `/api/correction/assignments/delete-subject/` | DELETE | ADMIN, COORDINATOR | — | Delete all assignments for a subject (`?subject_id=X`, blocked if grades exist) |
+| `/api/correction/my-copies/` | GET | CORRECTOR | COR-02 | Get assigned copies with scan file URLs (`?subject_id=` filter) |
+| `/api/correction/grades/` | GET | ADMIN, COORD, CORRECTOR | COR-03 | View grades (corrector sees own only; `?subject_id=` filter) |
+| `/api/correction/grades/submit/` | POST | ADMIN, COORD, CORRECTOR | COR-03/04 | Submit grade `{anonymous_code, exam_subject_id, grade}` (auto-detects discrepancy) |
+| `/api/correction/discrepancies/` | GET | ADMIN, COORDINATOR | COR-05 | View discrepancies (read-only) |
+| `/api/correction/discrepancies/{id}/assign-third-corrector/` | POST | ADMIN, COORDINATOR | COR-06 | Assign third corrector `{third_corrector_id}` |
+| `/api/correction/compute-final-grades/` | POST | ADMIN, COORDINATOR | COR-07 | Compute final grades `{subject_id}` per subject rule |
+| `/api/correction/locks/` | GET | ADMIN, COORDINATOR | COR-08 | View grade locks |
+| `/api/correction/locks/lock-subject/` | POST | ADMIN, COORDINATOR | COR-08 | Lock grades `{subject_id}` (validates prerequisites) |
+| `/api/correction/generate-pv/` | POST | ADMIN, COORDINATOR | COR-09 | Generate PV of Correction `{subject_id}` (requires lock) |
 
 ---
 
-## Deliberation Module (`/api/deliberation/`) — PARTIAL
+## Deliberation Module (`/api/deliberation/`)
 
 | Endpoint | Method | Access | SRS Ref | Description |
 |---|---|---|---|---|
 | `/api/deliberation/runs/` | GET, POST | ADMIN, JURY_PRES, JURY_MEM | DEL-01 | Manage deliberation runs |
 | `/api/deliberation/runs/{id}/` | GET | ADMIN, JURY_PRES, JURY_MEM | — | Run detail |
-| `/api/deliberation/runs/{id}/close/` | POST | ADMIN, JURY_PRES | DEL-05 | Close deliberation |
-| `/api/deliberation/runs/{id}/reopen/` | POST | ADMIN | DEL-05 | Reopen (requires `reason` in body) |
-| `/api/deliberation/results/` | GET, POST | ADMIN, JURY_PRES, JURY_MEM | DEL-03 | Results (skeleton) |
+| `/api/deliberation/runs/{id}/compute/` | POST | ADMIN, JURY_PRESIDENT | DEL-02/03/04 | Compute weighted averages, ranking, outcomes |
+| `/api/deliberation/runs/{id}/close/` | POST | ADMIN, JURY_PRESIDENT | DEL-05/06 | Close deliberation + lift anonymity |
+| `/api/deliberation/runs/{id}/reopen/` | POST | ADMIN only | DEL-05 | Reopen (requires reason, blocked if archived) |
+| `/api/deliberation/runs/{id}/generate-pv/` | POST | ADMIN, JURY_PRESIDENT | DEL-07 | Generate PV of Deliberation |
+| `/api/deliberation/runs/{id}/archive/` | POST | ADMIN, JURY_PRESIDENT | DEL-09 | Archive deliberation (immutable) |
+| `/api/deliberation/results/` | GET | ADMIN, JURY_PRES, JURY_MEM | DEL-03 | View results (ranked by weighted average) |
+| `/api/deliberation/sign-pv/` | POST | ADMIN, JURY_PRES, JURY_MEM | DEL-08 | Sign a deliberation PV `{pv_document_id}` |
 
 ---
 

@@ -17,7 +17,16 @@ class DeliberationOutcome(models.TextChoices):
 
 class DeliberationRun(TimeStampedModel):
     exam_session_id = models.BigIntegerField(unique=True)
-    status = models.CharField(max_length=10, choices=DeliberationStatus.choices, default=DeliberationStatus.OPEN)
+    status = models.CharField(
+        max_length=10,
+        choices=DeliberationStatus.choices,
+        default=DeliberationStatus.OPEN,
+    )
+    admission_threshold = models.DecimalField(
+        max_digits=5, decimal_places=2, default=10.00
+    )
+    waiting_list_capacity = models.PositiveIntegerField(default=0)
+    is_archived = models.BooleanField(default=False)
     closed_at = models.DateTimeField(null=True, blank=True)
     closed_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -32,7 +41,9 @@ class DeliberationRun(TimeStampedModel):
 
 
 class DeliberationResult(TimeStampedModel):
-    deliberation = models.ForeignKey(DeliberationRun, on_delete=models.CASCADE, related_name="results")
+    deliberation = models.ForeignKey(
+        DeliberationRun, on_delete=models.CASCADE, related_name="results"
+    )
     candidate_id = models.BigIntegerField(null=True, blank=True)
     anonymous_code = models.CharField(max_length=20)
     weighted_average = models.DecimalField(max_digits=5, decimal_places=2)

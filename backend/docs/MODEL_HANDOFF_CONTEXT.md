@@ -1,6 +1,6 @@
 # Model Handoff Context (Token-Safe Continuity)
 
-Last updated: 2026-04-13  
+Last updated: 2026-04-15  
 Project: ConcoursDoctor backend (`backend/`)
 
 This document is for new AI models taking over when context is truncated.
@@ -52,39 +52,35 @@ Any model finishing a slice must update these sections before handoff.
 
 - Django version currently used in venv: `6.0.4`.
 - Requirement pinned in `requirements/base.txt`: `Django>=6.0.4,<6.1`.
-- Tests status (latest run): `95 passed`.
+- Tests status (latest run): `173 passed`.
 
 ## Recently completed slice
 
-- **Accounts/Auth module fully implemented** (CD-FR-AUTH-01 through AUTH-05 + CD-FR-LOG-02/03):
-  - **CD-FR-AUTH-01**: JWT login with 8h access / 24h refresh, token rotation + blacklist. Working.
-  - **CD-FR-AUTH-02**: Logout blacklists refresh token. Working.
-  - **CD-FR-AUTH-03**: 3 failed logins → 15min lockout. `notify_admin_lockout_task` now **implemented** (emails all active ADMIN users).
-  - **CD-FR-AUTH-04**: 8 RBAC roles enforced per-module.
-  - **CD-FR-AUTH-05**: Invite-only onboarding: Admin invites user (email + role) → email with invite link → user sets password → account activated. `send_invite_email_task` now **implemented** (sends real SMTP email).
-  - **CD-FR-LOG-02**: Login/logout events now logged with IP address capture (`X-Forwarded-For` aware).
-  - **CD-FR-LOG-03**: Added `ActionType.LOGIN` and `ActionType.LOGOUT` to audit choices.
-  - **`log_event()`** now accepts optional `ip_address` parameter.
-  - 26 accounts tests (was 1), 95 total tests passing.
-  - In-app docs: `apps/accounts/README.md`.
+- **Deliberation engine fully implemented** (CD-FR-DEL-01 through DEL-09):
+  - **CD-FR-DEL-01**: Jury-only access with prerequisite check (all subjects locked before compute).
+  - **CD-FR-DEL-02**: Weighted average computation: `sum(grade * coefficient) / sum(coefficients)` per anonymous code across all subjects.
+  - **CD-FR-DEL-03**: Provisional ranking by weighted_average DESC (anonymous codes only until close).
+  - **CD-FR-DEL-04**: Admissibility auto-flagging: ADMITTED if >= admission_threshold, WAITING_LIST if rank within capacity, REJECTED otherwise. Threshold + capacity configurable on DeliberationRun.
+  - **CD-FR-DEL-05**: Close deliberation with prerequisite checks. Reopen blocked if archived.
+  - **CD-FR-DEL-06**: Anonymity lifting on close: `_lift_anonymity()` decrypts candidate_id from Fernet-encrypted AnonymousCode.candidate_id_encrypted and populates DeliberationResult.candidate_id.
+  - **CD-FR-DEL-07**: PV of Deliberation generated as text file with all results + identities.
+  - **CD-FR-DEL-08**: Electronic signatures via `sign_pv()`. ADMIN/JURY_PRESIDENT/JURY_MEMBER can sign. Duplicate prevented.
+  - **CD-FR-DEL-09**: Archival: sets is_archived=True on run + PV. Archived deliberations cannot be reopened.
+  - `DeliberationRun` model: added `admission_threshold`, `waiting_list_capacity`, `is_archived`.
+  - 28 deliberation tests (was 3). 173 total tests passing.
 
 ## 4. What Is Still Missing (High Priority)
 
 1. ~~Attendance finalization rules~~ — **COMPLETED**.
 2. ~~Anonymization core~~ — **COMPLETED**.
-3. ~~Examination Planning~~ — **COMPLETED** in this slice.
-4. Correction workflow:
-   - discrepancy auto-detection
-   - coordinator alert and third-corrector arbitration
-   - final-grade computation rule per subject
-4. Deliberation engine:
-   - weighted averages
-   - ranking and thresholds
-   - closure prerequisites
-   - anonymity lifting on close
-5. PV generation for remaining types (Correction, Deliberation). PDF library needed (e.g., reportlab or weasyprint). Subject Creation and Lottery PVs now done (text format).
-6. ~~Full audit coverage for auth events~~ — **COMPLETED** (login/logout + IP capture).
-7. Account lockout notification to Admin — **COMPLETED** (`notify_admin_lockout_task`).
+3. ~~Examination Planning~~ — **COMPLETED**.
+4. ~~Correction workflow (COR-01 through COR-09)~~ — **COMPLETED**.
+5. ~~Deliberation engine (DEL-01 through DEL-09)~~ — **COMPLETED**.
+6. PV generation: all 6 PV types now implemented (text format). PDF library still needed for production (reportlab/weasyprint).
+7. ~~Full audit coverage for auth events~~ — **COMPLETED**.
+8. ~~Account lockout notification to Admin~~ — **COMPLETED**.
+9. Candidate deactivate (CD-FR-CAND-05): No deactivate endpoint yet.
+10. Object-level RBAC refinement: corrector-specific queryset filtering already done; other modules may need tightening.
 
 ## 5. Mandatory Behavior for Any New Model
 
@@ -132,19 +128,9 @@ After coding:
 
 Next implementation slice should be:
 
-1. **Correction workflow** (CD-FR-COR-01 through COR-09):
-   - Assign anonymized copies to 2 correctors (CD-FR-COR-01)
-   - Grade entry with score range validation (CD-FR-COR-03)
-   - Discrepancy auto-detection when both grades entered (CD-FR-COR-04/05)
-   - Third corrector arbitration (CD-FR-COR-06)
-   - Final grade computation per subject rule (CD-FR-COR-07)
-   - Grade lock after coordinator validation (CD-FR-COR-08)
-   - PV of Correction (CD-FR-COR-09)
+1. **Candidate deactivate** (CD-FR-CAND-05): Add deactivate/activate endpoint on candidates module. Currently bare CRUD only.
 
-Rationale:
-
-- Examination Planning is complete; Correction is the next step in the exam lifecycle.
-- The `CorrectionAssignment`, `CopyGrade`, `GradeDiscrepancy`, `SubjectGradeLock` models already exist.
+Rationale: The exam lifecycle is now complete (Import → Plan → Attendance → Anonymize → Correct → Deliberate → PV). The remaining items are polish/debt items.
 
 ## 8. Handoff Prompt Template (for next model)
 
