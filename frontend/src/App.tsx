@@ -21,6 +21,7 @@ import { UserManagementPage } from './pages/UserManagement';
 import { AuditTrailPage } from './pages/AuditTrail';
 import { SystemSettingsPage } from './pages/SystemSettings';
 import { NotFoundPage } from './pages/NotFound';
+import { CreateConcourPage } from './pages/CreateConcour';
 
 const { ADMIN, CFD_HEAD, COORDINATOR, CORRECTOR, SUPERVISOR, JURY_PRESIDENT, JURY_MEMBER, ANONYMITY_COMMISSION } = UserRole;
 
@@ -47,6 +48,12 @@ export default function App() {
           <Route path={ROUTES.DASHBOARD} element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          } />
+
+          <Route path={ROUTES.CREATE_CONCOUR} element={
+            <ProtectedRoute allowedRoles={[ADMIN, CFD_HEAD]}>
+              <CreateConcourPage />
             </ProtectedRoute>
           } />
 

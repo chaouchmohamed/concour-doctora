@@ -9,7 +9,7 @@ import logoIcon from '../assets/logo.png';
 
 
 export const LoginPage = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -26,7 +26,7 @@ export const LoginPage = () => {
     setError('');
     setIsLoading(true);
     try {
-      await login(username.trim(), password);
+      await login(email.trim(), password);
       // ProtectedRoute will intercept if must_change_password is true after login
       navigate(from, { replace: true });
 
@@ -76,13 +76,13 @@ export const LoginPage = () => {
           <form onSubmit={handleLogin} className="space-y-3 w-full">
 
             <div>
-              <label className="block text-[12px] font-semibold text-[#1A1A1A] mb-1">Username</label>
+              <label className="block text-[12px] font-semibold text-[#1A1A1A] mb-1">Email</label>
               <Input
-                placeholder="e.g. admin"
-                type="text"
+                placeholder="user@institution.dz"
+                type="email"
                 required
-                value={username}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
+                value={email}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                 icon={<UserIcon size={14} />}
               />
             </div>

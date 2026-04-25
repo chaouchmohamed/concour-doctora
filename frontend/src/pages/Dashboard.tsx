@@ -27,6 +27,16 @@ import { cn } from "../constants";
 import { useAuth } from "../context/AuthContext";
 import { UserRole } from "../types";
 
+const USER_ROLE_STORAGE_KEY = "user_role";
+
+const getStoredRole = (): UserRole | undefined => {
+  const storedRole = localStorage.getItem(USER_ROLE_STORAGE_KEY);
+  if (storedRole && Object.values(UserRole).includes(storedRole as UserRole)) {
+    return storedRole as UserRole;
+  }
+  return undefined;
+};
+
 // ─── Shared primitives ────────────────────────────────────────────────────────
 
 const KpiCard = ({
@@ -1008,7 +1018,7 @@ const AnonymityDashboard = ({ name }: { name: string }) => (
 // ─── Main export ──────────────────────────────────────────────────────────────
 export const Dashboard = () => {
   const { user } = useAuth();
-  const userRole = user?.profile?.role as UserRole | undefined;
+  const userRole = user?.profile?.role || getStoredRole();
   const fullName = user?.full_name || user?.username || "User";
 
   const renderDashboard = () => {

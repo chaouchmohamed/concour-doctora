@@ -235,7 +235,7 @@ Create the `.env` file:
 cat > .env << 'EOF'
 DEBUG=True
 SECRET_KEY=django-insecure-replace-this-key
-ALLOWED_HOSTS=localhost,127.0.0.1
+ALLOWED_HOSTS=localhost,127.0.0.1,localhost:3001,127.0.0.1:3001
 DB_ENGINE=django.db.backends.sqlite3
 DB_NAME=db.sqlite3
 JWT_ACCESS_TOKEN_LIFETIME=60

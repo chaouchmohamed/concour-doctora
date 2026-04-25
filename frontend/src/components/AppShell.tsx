@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -19,6 +19,10 @@ import {
   History,
   Trophy,
   EyeOff,
+  ChevronDown,
+  BookOpen,
+  Check,
+  Plus,
 } from "lucide-react";
 import { ROUTES, APP_NAME, cn } from "../constants";
 import { motion, AnimatePresence } from "motion/react";
@@ -116,11 +120,103 @@ const ROLE_LABELS: Record<UserRole, string> = {
 };
 
 function getInitials(fullName: string, username: string): string {
-  const parts = fullName.trim().split(" ");
+  const safeFullName = (fullName || "").trim();
+  const safeUsername = (username || "").trim();
+  const parts = safeFullName.split(" ").filter(Boolean);
   if (parts.length >= 2)
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  return username.slice(0, 2).toUpperCase();
+  if (safeUsername) return safeUsername.slice(0, 2).toUpperCase();
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return "U";
 }
+
+const SessionDropdown = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [selected, setSelected] = useState({ subject: "Mathematics", year: "2025" });
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const options = [
+    { subject: "Mathematics", year: "2025", color: "bg-blue-50 text-blue-600" },
+    { subject: "Computer Science", year: "2023", color: "bg-purple-50 text-purple-600" },
+    { subject: "Physics", year: "2024", color: "bg-emerald-50 text-emerald-600" },
+  ];
+
+  return (
+    <div className="relative hidden sm:block z-50" ref={dropdownRef}>
+      <div
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-3 pl-3 pr-2 py-1.5 bg-white border border-border rounded-xl hover:bg-[#FAFAFA] hover:border-[#E5E0D8] transition-all group shadow-sm cursor-pointer"
+      >
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-md flex items-center justify-center bg-[#F0EDE7] text-[#8B7355]">
+            <BookOpen size={13} strokeWidth={2.5} />
+          </div>
+          <div className="flex flex-col items-start -space-y-0.5">
+            <span className="text-[12px] font-extrabold text-[#1A1A1A] leading-tight">{selected.subject}</span>
+            <span className="text-[10px] font-bold text-[#8B7355] leading-tight">Session {selected.year}</span>
+          </div>
+        </div>
+        <ChevronDown size={14} className={cn("text-[#9B9B9B] transition-transform duration-200", isOpen && "rotate-180")} />
+      </div>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 8, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.96 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="absolute top-full right-0 mt-2 w-[240px] bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-border overflow-hidden p-1.5 origin-top-right flex flex-col gap-0.5"
+          >
+            <div className="px-2.5 py-2 mb-1">
+              <p className="text-[10px] font-bold text-[#9B9B9B] uppercase tracking-widest pl-1">Switch Session</p>
+            </div>
+            {options.map((opt) => {
+              const isSelected = selected.subject === opt.subject && selected.year === opt.year;
+              return (
+                <button
+                  key={`${opt.subject}-${opt.year}`}
+                  onClick={() => { setSelected(opt); setIsOpen(false); }}
+                  className={cn(
+                    "w-full text-left flex items-center justify-between px-2.5 py-2 rounded-lg transition-all border border-transparent",
+                    isSelected ? "bg-[#8B7355]/5 border-[#8B7355]/10" : "hover:bg-[#FAFAFA] hover:border-border/50"
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={cn("w-7 h-7 rounded-md flex items-center justify-center shrink-0", opt.color)}>
+                      <BookOpen size={14} />
+                    </div>
+                    <div className="flex flex-col -space-y-0.5">
+                      <p className={cn("text-[13px] font-bold", isSelected ? "text-[#8B7355]" : "text-[#1A1A1A]")}>
+                        {opt.subject}
+                      </p>
+                      <p className="text-[11px] text-[#9B9B9B] font-medium leading-tight mt-0.5">{opt.year}</p>
+                    </div>
+                  </div>
+                  {isSelected && (
+                    <div className="w-5 h-5 rounded-full bg-[#8B7355] flex items-center justify-center shadow-sm">
+                      <Check size={12} strokeWidth={3} className="text-white" />
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 export const AppShell = ({
   children,
@@ -135,7 +231,10 @@ export const AppShell = ({
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
-  const userRole = user?.profile?.role as UserRole | undefined;
+  const userRole =
+    ((user as any)?.profile?.role || (user as any)?.role) as
+      | UserRole
+      | undefined;
 
   const sidebarItems = ALL_NAV_ITEMS.filter(
     (item) =>
@@ -147,8 +246,18 @@ export const AppShell = ({
     navigate(ROUTES.LOGIN);
   };
 
-  const fullName = user?.full_name || user?.username || "User";
-  const initials = user ? getInitials(fullName, user.username) : "?";
+  const fullName =
+    (user as any)?.full_name ||
+    `${(user as any)?.first_name || ""} ${(user as any)?.last_name || ""}`.trim() ||
+    (user as any)?.username ||
+    (user as any)?.email ||
+    "User";
+  const usernameForInitials =
+    (user as any)?.username ||
+    (typeof (user as any)?.email === "string"
+      ? (user as any).email.split("@")[0]
+      : "");
+  const initials = user ? getInitials(fullName, usernameForInitials) : "?";
   const roleLabel = userRole ? (ROLE_LABELS[userRole] ?? userRole) : "";
 
   const NavLinks = ({ collapsed = false, onNavigate = () => {} }) => (
@@ -328,6 +437,12 @@ export const AppShell = ({
           </div>
 
           <div className="flex items-center gap-2 lg:gap-4">
+            <Link to={ROUTES.CREATE_CONCOUR} className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-[#8B7355] text-white rounded-xl hover:bg-[#7A6548] transition-all font-bold text-[12px] shadow-sm shadow-[#8B7355]/20 active:scale-95">
+              <Plus size={14} strokeWidth={3} />
+              Create Concour
+            </Link>
+            <SessionDropdown />
+
             <div className="h-8 w-px bg-border mx-1" />
 
             <div className="flex items-center gap-2 p-1 rounded-md">

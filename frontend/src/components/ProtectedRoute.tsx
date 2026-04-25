@@ -12,6 +12,7 @@ interface ProtectedRouteProps {
 export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
     const { isAuthenticated, isLoading, user } = useAuth();
     const location = useLocation();
+    const userRole = ((user as any)?.profile?.role || (user as any)?.role) as UserRole | undefined;
 
     if (isLoading) {
         return (
@@ -34,7 +35,7 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
         return <Navigate to={ROUTES.CHANGE_PASSWORD} replace />;
     }
 
-    if (allowedRoles && user && !allowedRoles.includes(user.profile.role as UserRole)) {
+    if (allowedRoles && userRole && !allowedRoles.includes(userRole)) {
         // Redirect to the first page the user CAN access
         return <Navigate to={ROUTES.DASHBOARD} replace />;
     }
