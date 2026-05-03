@@ -6,8 +6,9 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
-import { cn, API_BASE, ROUTES } from '../constants';
+import { cn, ROUTES } from '../constants';
 import { useAuth } from '../context/AuthContext';
+import { api } from '../lib/api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -108,6 +109,9 @@ export const SupervisorPWA = () => {
     if (!localStorage.getItem(TIMER_KEY)) {
       localStorage.setItem(TIMER_KEY, Date.now().toString());
     }
+    if (localStorage.getItem('supervisor_pending_submit')) {
+      setPendingSync(true);
+    }
     const tick = () => {
       const start = parseInt(localStorage.getItem(TIMER_KEY) || Date.now().toString(), 10);
       setElapsed(Math.floor((Date.now() - start) / 1000));
@@ -115,16 +119,6 @@ export const SupervisorPWA = () => {
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, []);
-
-  // ── Online/Offline ────────────────────────────────────────────────────────
-
-  useEffect(() => {
-    const on  = () => { setIsOnline(true);  syncIfPending(); };
-    const off = () => setIsOnline(false);
-    window.addEventListener('online', on);
-    window.addEventListener('offline', off);
-    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); };
   }, []);
 
   // ── Persist on every change ───────────────────────────────────────────────
@@ -186,14 +180,40 @@ export const SupervisorPWA = () => {
 
   // ── Sync ──────────────────────────────────────────────────────────────────
 
-  const syncIfPending = async () => {
+  const syncIfPending = useCallback(async () => {
     if (!pendingSync) return;
     try {
-      // In production, POST to /api/attendance/bulk/
+      const raw = localStorage.getItem('supervisor_pending_submit');
+      if (!raw) {
+        setPendingSync(false);
+        return;
+      }
+      const pending = JSON.parse(raw) as {
+        session: Record<string, unknown>;
+        records: Record<string, unknown>[];
+      };
+      await api.attendance.bulk(pending.session, pending.records);
+      localStorage.removeItem('supervisor_pending_submit');
       toast('Synced attendance to server', 'success');
       setPendingSync(false);
     } catch { toast('Sync failed — will retry', 'error'); }
-  };
+  }, [pendingSync, toast]);
+
+  // ── Online/Offline ────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    const on  = () => { setIsOnline(true); };
+    const off = () => setIsOnline(false);
+    window.addEventListener('online', on);
+    window.addEventListener('offline', off);
+    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); };
+  }, []);
+
+  useEffect(() => {
+    if (isOnline) {
+      syncIfPending();
+    }
+  }, [isOnline, syncIfPending]);
 
   // ── Submit ────────────────────────────────────────────────────────────────
 
@@ -204,18 +224,14 @@ export const SupervisorPWA = () => {
         application_number: s.appNum,
         seat: s.seat,
         present: s.status === 'PRESENT',
-        absent: s.status === 'ABSENT',
         flagged: !!s.flagged,
         incident: s.incident || null,
         note: s.note || '',
       }));
 
       if (isOnline) {
-        await fetch(`${API_BASE}/attendance/`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ session: SESSION_INFO, records: payload }),
-        });
+        // ✅ Fixed: was missing Bearer token and using wrong endpoint (/attendance/ vs /attendance/bulk/)
+        await api.attendance.bulk(SESSION_INFO, payload);
       } else {
         localStorage.setItem('supervisor_pending_submit', JSON.stringify({ session: SESSION_INFO, records: payload, timestamp: Date.now() }));
         setPendingSync(true);
@@ -224,8 +240,8 @@ export const SupervisorPWA = () => {
       setSubmitted(true);
       setSubmitModal(false);
       toast(isOnline ? 'Attendance submitted successfully!' : 'Saved offline — will submit when connected', 'success');
-    } catch {
-      toast('Submission failed. Changes saved locally.', 'error');
+    } catch (err) {
+      toast(`Submission failed: ${err instanceof Error ? err.message : 'Unknown error'}. Changes saved locally.`, 'error');
     } finally {
       setSubmitting(false);
     }

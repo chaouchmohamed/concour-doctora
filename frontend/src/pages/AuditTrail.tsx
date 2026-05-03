@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   History,
   Search,
@@ -22,6 +22,7 @@ import { AppShell } from "../components/AppShell";
 import { Card } from "../components/UI";
 import { cn } from "../constants";
 import { motion, AnimatePresence } from "motion/react";
+import { api, AuditLog as ApiLog } from "../lib/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -351,16 +352,15 @@ const DateModal = ({
 
 // ─── Export Modal ─────────────────────────────────────────────────────────────
 
-const ExportModal = ({ onClose }: { onClose: () => void }) => {
+const ExportModal = ({ onClose, onExport }: { onClose: () => void; onExport?: () => void }) => {
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
 
   const handleExport = () => {
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      setDone(true);
-    }, 1400);
+    (onExport ? Promise.resolve(onExport()) : new Promise(r => setTimeout(r, 1400)))
+      .then(() => { setLoading(false); setDone(true); })
+      .catch(() => { setLoading(false); setDone(true); });
   };
 
   return (
@@ -453,19 +453,54 @@ export const AuditTrailPage = () => {
   const [showFilter, setShowFilter] = useState(false);
   const [showDate, setShowDate] = useState(false);
   const [showExport, setShowExport] = useState(false);
-  const [dateRange, setDateRange] = useState<{
-    from: string;
-    to: string;
-  } | null>(null);
+  const [dateRange, setDateRange] = useState<{ from: string; to: string } | null>(null);
+  const [logs, setLogs] = useState<ApiLog[]>([]);
+  const [userRoles, setUserRoles] = useState<Record<number, string>>({});
+  const [totalCount, setTotalCount] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = mockLogs.filter((log) => {
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([api.auditLogs.list(), api.users.list()])
+      .then(([logRes, userRes]) => {
+        setLogs(logRes.results);
+        setTotalCount(logRes.count);
+        setUserRoles(
+          Object.fromEntries(
+            userRes.results.map((user) => [user.id, user.profile?.role ?? ""]),
+          ),
+        );
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  // Map API log to display-friendly shape
+  const toEntry = (log: ApiLog) => ({
+    id: String(log.id),
+    timestamp: new Date(log.timestamp).toLocaleString(),
+    timestampValue: log.timestamp,
+    user: log.user_full_name || log.username,
+    role: log.user ? userRoles[log.user] ?? "" : "SYSTEM",
+    action: log.action,
+    target: `${log.object_type}#${log.object_id}`,
+    ip: log.ip_address || "—",
+    detail: JSON.stringify(log.details ?? {}),
+  });
+
+  const filtered = logs.map(toEntry).filter((log) => {
     const matchSearch =
       search === "" ||
       log.user.toLowerCase().includes(search.toLowerCase()) ||
       log.action.toLowerCase().includes(search.toLowerCase()) ||
       log.target.toLowerCase().includes(search.toLowerCase());
     const matchRole = roleFilter === "ALL" || log.role === roleFilter;
-    return matchSearch && matchRole;
+    const logDate = new Date(log.timestampValue);
+    const matchDate =
+      !dateRange ||
+      (new Date(`${dateRange.from}T00:00:00`) <= logDate &&
+        logDate <= new Date(`${dateRange.to}T23:59:59`));
+    return matchSearch && matchRole && matchDate;
   });
 
   return (
@@ -483,7 +518,7 @@ export const AuditTrailPage = () => {
             onApply={(f, t) => setDateRange({ from: f, to: t })}
           />
         )}
-        {showExport && <ExportModal onClose={() => setShowExport(false)} />}
+        {showExport && <ExportModal onClose={() => setShowExport(false)} onExport={() => api.auditLogs.exportCsv()} />}
       </AnimatePresence>
 
       {/* Fixed height layout */}
@@ -578,7 +613,7 @@ export const AuditTrailPage = () => {
               <History size={15} className="text-primary-accent" /> Activity Log
             </h3>
             <span className="text-[10px] font-bold bg-gray-100 text-gray-600 border border-gray-200 px-2.5 py-0.5 rounded-full">
-              {filtered.length} entries shown
+              {loading ? "…" : `${filtered.length} entries shown`}
             </span>
           </div>
 
@@ -709,7 +744,7 @@ export const AuditTrailPage = () => {
               <span className="font-semibold text-text-primary">
                 {filtered.length}
               </span>{" "}
-              of <span className="font-semibold text-text-primary">156</span>{" "}
+              of <span className="font-semibold text-text-primary">{totalCount}</span>{" "}
               entries
             </p>
             <p className="text-xs text-muted flex items-center gap-1.5">

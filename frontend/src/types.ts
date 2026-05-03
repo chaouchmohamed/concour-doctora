@@ -55,6 +55,33 @@ export interface AuthUser {
   profile: UserProfile;
 }
 
+export interface ExamSession {
+  id: number;
+  name: string;
+  year: number;
+  date: string;
+  status: 'DRAFT' | 'ACTIVE' | 'CLOSED';
+  description: string;
+  subjects_count: number;
+  candidates_count: number;
+}
+
+export interface DashboardStats {
+  active_session: ExamSession | null;
+  total_candidates?: number;
+  total_present?: number;
+  pending_corrections?: number;
+  active_discrepancies?: number;
+  subjects_by_status?: { status: string; count: number }[];
+  recent_activities?: import('./lib/api').AuditLog[];
+  assigned_copies?: number;
+  completed_corrections?: number;
+  today_attendance?: number;
+  total_today?: number;
+  candidates_to_deliberate?: number;
+  deliberation_completed?: boolean;
+}
+
 export interface User {
   id: string;
   firstName: string;

@@ -4,16 +4,16 @@ Run with: python manage.py seed_users
 """
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
-from api.models import UserProfile
+from auth_app.models import UserProfile
 
 
 SEED_USERS = [
     {
         'username': 'admin',
-        'password': 'Admin@1234',
+        'password': 'Admin123!',
         'first_name': 'Ahmed',
         'last_name': 'Benali',
-        'email': 'admin@concours.dz',
+        'email': 'admin@esi-sba.dz',
         'role': 'ADMIN',
     },
     {
@@ -92,6 +92,8 @@ class Command(BaseCommand):
             user.last_name = data['last_name']
             user.email = data['email']
             user.is_active = True
+            user.is_staff = role == 'ADMIN'
+            user.is_superuser = role == 'ADMIN'
             user.save()
 
             # Create or update profile

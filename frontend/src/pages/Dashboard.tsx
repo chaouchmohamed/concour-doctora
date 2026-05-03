@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Users,
   Calendar,
@@ -19,6 +19,7 @@ import {
   MapPin,
   TrendingUp,
   Shield,
+  Loader2,
 } from "lucide-react";
 import { AppShell } from "../components/AppShell";
 import { Card } from "../components/UI";
@@ -26,6 +27,7 @@ import { motion } from "motion/react";
 import { cn } from "../constants";
 import { useAuth } from "../context/AuthContext";
 import { UserRole } from "../types";
+import { api, DashboardStats } from "../lib/api";
 
 // ─── Shared primitives ────────────────────────────────────────────────────────
 
@@ -158,7 +160,7 @@ const ChecklistCard = ({
 );
 
 // ─── ADMIN ────────────────────────────────────────────────────────────────────
-const AdminDashboard = ({ name }: { name: string }) => (
+const AdminDashboard = ({ name, stats }: { name: string; stats: DashboardStats | null }) => (
   <div className="h-full flex flex-col gap-4">
     <p className="text-sm text-[#6B6B6B] shrink-0">
       Welcome back, <span className="font-semibold text-[#1A1A1A]">{name}</span>
@@ -168,35 +170,29 @@ const AdminDashboard = ({ name }: { name: string }) => (
       {[
         {
           label: "Total Candidates",
-          value: "1,284",
+          value: stats?.total_candidates?.toLocaleString() ?? "—",
           icon: Users,
           iconBg: "bg-blue-50 text-blue-500",
-          trend: "+12%",
-          trendUp: true,
         },
         {
-          label: "Exams Scheduled",
-          value: "12",
+          label: "Session",
+          value: stats?.active_session?.name ?? "None active",
           icon: Calendar,
           iconBg: "bg-orange-50 text-orange-500",
-          trend: "0%",
-          trendUp: null,
         },
         {
-          label: "Active Supervisors",
-          value: "45",
+          label: "Present",
+          value: stats?.total_present?.toLocaleString() ?? "—",
           icon: ShieldCheck,
           iconBg: "bg-purple-50 text-purple-500",
-          trend: "+5%",
-          trendUp: true,
         },
         {
           label: "Pending Corrections",
-          value: "89",
+          value: stats?.pending_corrections?.toLocaleString() ?? "—",
           icon: ClipboardList,
           iconBg: "bg-red-50 text-red-500",
-          trend: "-2%",
-          trendUp: false,
+          trend: stats?.active_discrepancies ? `${stats.active_discrepancies} disc.` : undefined,
+          trendUp: false as boolean | null,
         },
       ].map((s, i) => (
         <motion.div
@@ -231,66 +227,29 @@ const AdminDashboard = ({ name }: { name: string }) => (
             ))}
           </div>
           <div className="flex-1 overflow-y-auto divide-y divide-[#F5F5F5]">
-            {[
-              {
-                av: "SM",
-                bg: "bg-pink-100 text-pink-600",
-                name: "Sarah Miller",
-                sp: "Cardiology",
-                st: "VERIFIED",
-                v: "success",
-                dt: "2 mins ago",
-              },
-              {
-                av: "AC",
-                bg: "bg-blue-100 text-blue-600",
-                name: "Ahmed Chen",
-                sp: "Neurology",
-                st: "PENDING",
-                v: "warning",
-                dt: "1 hour ago",
-              },
-              {
-                av: "ER",
-                bg: "bg-green-100 text-green-600",
-                name: "Elena Rodriguez",
-                sp: "Pediatrics",
-                st: "VERIFIED",
-                v: "success",
-                dt: "3 hours ago",
-              },
-            ].map((r, i) => (
+            {(stats?.recent_activities ?? []).slice(0, 8).map((log, i) => {
+              const initials = (log.user_full_name || log.username || "?").split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
+              const colors = ["bg-pink-100 text-pink-600", "bg-blue-100 text-blue-600", "bg-green-100 text-green-600", "bg-purple-100 text-purple-600", "bg-orange-100 text-orange-600"];
+              return (
               <div
-                key={i}
+                key={log.id}
                 className="grid grid-cols-4 items-center px-6 py-4 hover:bg-[#FAFAFA] transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div
-                    className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0",
-                      r.bg,
-                    )}
-                  >
-                    {r.av}
+                  <div className={cn("w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0", colors[i % colors.length])}>
+                    {initials}
                   </div>
-                  <span className="text-[13px] font-semibold text-[#1A1A1A]">
-                    {r.name}
-                  </span>
+                  <span className="text-[13px] font-semibold text-[#1A1A1A] truncate">{log.user_full_name || log.username}</span>
                 </div>
-                <span className="text-[13px] text-[#555]">{r.sp}</span>
-                <span
-                  className={cn(
-                    "text-[11px] font-bold px-2.5 py-1 rounded-md w-fit",
-                    r.v === "success"
-                      ? "bg-emerald-50 text-emerald-600"
-                      : "bg-amber-50 text-amber-600",
-                  )}
-                >
-                  {r.st}
-                </span>
-                <span className="text-[12px] text-[#9B9B9B]">{r.dt}</span>
+                <span className="text-[13px] text-[#555] truncate">{log.object_type}</span>
+                <span className={cn("text-[11px] font-bold px-2.5 py-1 rounded-md w-fit", "bg-emerald-50 text-emerald-600")}>{log.action}</span>
+                <span className="text-[12px] text-[#9B9B9B]">{new Date(log.timestamp).toLocaleTimeString()}</span>
               </div>
-            ))}
+            );
+            })}
+            {(!stats?.recent_activities || stats.recent_activities.length === 0) && (
+              <div className="flex items-center justify-center h-24 text-[#9B9B9B] text-sm">No recent activity</div>
+            )}
           </div>
         </Card>
       </div>
@@ -321,7 +280,7 @@ const AdminDashboard = ({ name }: { name: string }) => (
 );
 
 // ─── CFD HEAD ─────────────────────────────────────────────────────────────────
-const CfdHeadDashboard = ({ name }: { name: string }) => (
+const CfdHeadDashboard = ({ name, stats }: { name: string; stats: DashboardStats | null }) => (
   <div className="h-full flex flex-col gap-4">
     <p className="text-sm text-[#6B6B6B] shrink-0">
       Welcome, <span className="font-semibold text-[#1A1A1A]">{name}</span>.
@@ -399,7 +358,7 @@ const CfdHeadDashboard = ({ name }: { name: string }) => (
 );
 
 // ─── COORDINATOR ──────────────────────────────────────────────────────────────
-const CoordinatorDashboard = ({ name }: { name: string }) => (
+const CoordinatorDashboard = ({ name, stats }: { name: string; stats: DashboardStats | null }) => (
   <div className="h-full flex flex-col gap-4">
     <p className="text-sm text-[#6B6B6B] shrink-0">
       Welcome, <span className="font-semibold text-[#1A1A1A]">{name}</span>.
@@ -408,28 +367,28 @@ const CoordinatorDashboard = ({ name }: { name: string }) => (
     <div className="grid grid-cols-4 gap-4 shrink-0">
       {[
         {
-          label: "Copies Assigned",
-          value: "1,190",
+          label: "Total Candidates",
+          value: stats?.total_candidates?.toLocaleString() ?? "—",
           icon: FileText,
           iconBg: "bg-blue-50 text-blue-500",
         },
         {
-          label: "Graded Both",
-          value: "1,148",
+          label: "Present",
+          value: stats?.total_present?.toLocaleString() ?? "—",
           icon: CheckCircle2,
           iconBg: "bg-emerald-50 text-emerald-600",
         },
         {
           label: "Discrepancies",
-          value: "42",
+          value: stats?.active_discrepancies?.toLocaleString() ?? "—",
           icon: AlertTriangle,
           iconBg: "bg-red-50 text-red-500",
-          trend: "High",
-          trendUp: false,
+          trend: (stats?.active_discrepancies ?? 0) > 0 ? "Pending" : "Clear",
+          trendUp: false as boolean | null,
         },
         {
-          label: "Locked Subjects",
-          value: "1/3",
+          label: "Pending Corrections",
+          value: stats?.pending_corrections?.toLocaleString() ?? "—",
           icon: Lock,
           iconBg: "bg-amber-50 text-amber-600",
         },
@@ -530,7 +489,7 @@ const CoordinatorDashboard = ({ name }: { name: string }) => (
 );
 
 // ─── CORRECTOR ────────────────────────────────────────────────────────────────
-const CorrectorDashboard = ({ name }: { name: string }) => (
+const CorrectorDashboard = ({ name, stats }: { name: string; stats: DashboardStats | null }) => (
   <div className="h-full flex flex-col gap-4">
     <p className="text-sm text-[#6B6B6B] shrink-0">
       Welcome, <span className="font-semibold text-[#1A1A1A]">{name}</span>.
@@ -540,21 +499,25 @@ const CorrectorDashboard = ({ name }: { name: string }) => (
       {[
         {
           label: "Assigned Copies",
-          value: "28",
+          value: stats?.assigned_copies?.toLocaleString() ?? "—",
           icon: FileText,
           iconBg: "bg-blue-50 text-blue-500",
         },
         {
-          label: "Graded",
-          value: "21",
+          label: "Completed",
+          value: stats?.completed_corrections?.toLocaleString() ?? "—",
           icon: CheckCircle2,
           iconBg: "bg-emerald-50 text-emerald-600",
-          trend: "75%",
-          trendUp: true,
+          trend: stats?.assigned_copies && stats?.completed_corrections
+            ? `${Math.round((stats.completed_corrections / stats.assigned_copies) * 100)}%`
+            : undefined,
+          trendUp: true as boolean | null,
         },
         {
           label: "Remaining",
-          value: "7",
+          value: stats?.assigned_copies != null && stats?.completed_corrections != null
+            ? (stats.assigned_copies - stats.completed_corrections).toString()
+            : "—",
           icon: Clock,
           iconBg: "bg-amber-50 text-amber-600",
         },
@@ -647,7 +610,7 @@ const CorrectorDashboard = ({ name }: { name: string }) => (
 );
 
 // ─── SUPERVISOR ───────────────────────────────────────────────────────────────
-const SupervisorDashboard = ({ name }: { name: string }) => (
+const SupervisorDashboard = ({ name, stats }: { name: string; stats: DashboardStats | null }) => (
   <div className="h-full flex flex-col gap-4">
     <p className="text-sm text-[#6B6B6B] shrink-0">
       Welcome, <span className="font-semibold text-[#1A1A1A]">{name}</span>.
@@ -656,20 +619,20 @@ const SupervisorDashboard = ({ name }: { name: string }) => (
     <div className="grid grid-cols-3 gap-4 shrink-0">
       {[
         {
-          label: "Your Room",
-          value: "A101",
+          label: "Session",
+          value: stats?.active_session?.name ?? "No active session",
           icon: MapPin,
           iconBg: "bg-purple-50 text-purple-500",
         },
         {
-          label: "Candidates",
-          value: "53",
+          label: "Total Candidates",
+          value: stats?.total_today?.toLocaleString() ?? "—",
           icon: Users,
           iconBg: "bg-blue-50 text-blue-500",
         },
         {
-          label: "Exam Starts In",
-          value: "2h 15m",
+          label: "Marked Today",
+          value: stats?.today_attendance?.toLocaleString() ?? "—",
           icon: Clock,
           iconBg: "bg-orange-50 text-orange-500",
         },
@@ -741,7 +704,7 @@ const SupervisorDashboard = ({ name }: { name: string }) => (
 );
 
 // ─── JURY PRESIDENT ───────────────────────────────────────────────────────────
-const JuryPresidentDashboard = ({ name }: { name: string }) => (
+const JuryPresidentDashboard = ({ name, stats }: { name: string; stats: DashboardStats | null }) => (
   <div className="h-full flex flex-col gap-4">
     <p className="text-sm text-[#6B6B6B] shrink-0">
       Welcome, <span className="font-semibold text-[#1A1A1A]">{name}</span>.
@@ -824,7 +787,7 @@ const JuryPresidentDashboard = ({ name }: { name: string }) => (
 );
 
 // ─── JURY MEMBER ──────────────────────────────────────────────────────────────
-const JuryMemberDashboard = ({ name }: { name: string }) => (
+const JuryMemberDashboard = ({ name, stats }: { name: string; stats: DashboardStats | null }) => (
   <div className="h-full flex flex-col gap-4">
     <p className="text-sm text-[#6B6B6B] shrink-0">
       Welcome, <span className="font-semibold text-[#1A1A1A]">{name}</span>. You
@@ -904,7 +867,7 @@ const JuryMemberDashboard = ({ name }: { name: string }) => (
 );
 
 // ─── ANONYMITY COMMISSION ─────────────────────────────────────────────────────
-const AnonymityDashboard = ({ name }: { name: string }) => (
+const AnonymityDashboard = ({ name, stats }: { name: string; stats: DashboardStats | null }) => (
   <div className="h-full flex flex-col gap-4">
     <p className="text-sm text-[#6B6B6B] shrink-0">
       Welcome, <span className="font-semibold text-[#1A1A1A]">{name}</span>.
@@ -1010,27 +973,46 @@ export const Dashboard = () => {
   const { user } = useAuth();
   const userRole = user?.profile?.role as UserRole | undefined;
   const fullName = user?.full_name || user?.username || "User";
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.dashboard.stats()
+      .then(setStats)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <AppShell title="Overview">
+        <div className="h-full flex items-center justify-center">
+          <Loader2 className="animate-spin text-[#8B7355]" size={32} />
+        </div>
+      </AppShell>
+    );
+  }
 
   const renderDashboard = () => {
     switch (userRole) {
       case UserRole.ADMIN:
-        return <AdminDashboard name={fullName} />;
+        return <AdminDashboard name={fullName} stats={stats} />;
       case UserRole.CFD_HEAD:
-        return <CfdHeadDashboard name={fullName} />;
+        return <CfdHeadDashboard name={fullName} stats={stats} />;
       case UserRole.COORDINATOR:
-        return <CoordinatorDashboard name={fullName} />;
+        return <CoordinatorDashboard name={fullName} stats={stats} />;
       case UserRole.CORRECTOR:
-        return <CorrectorDashboard name={fullName} />;
+        return <CorrectorDashboard name={fullName} stats={stats} />;
       case UserRole.SUPERVISOR:
-        return <SupervisorDashboard name={fullName} />;
+        return <SupervisorDashboard name={fullName} stats={stats} />;
       case UserRole.JURY_PRESIDENT:
-        return <JuryPresidentDashboard name={fullName} />;
+        return <JuryPresidentDashboard name={fullName} stats={stats} />;
       case UserRole.JURY_MEMBER:
-        return <JuryMemberDashboard name={fullName} />;
+        return <JuryMemberDashboard name={fullName} stats={stats} />;
       case UserRole.ANONYMITY_COMMISSION:
-        return <AnonymityDashboard name={fullName} />;
+        return <AnonymityDashboard name={fullName} stats={stats} />;
       default:
-        return <AdminDashboard name={fullName} />;
+        return <AdminDashboard name={fullName} stats={stats} />;
     }
   };
 

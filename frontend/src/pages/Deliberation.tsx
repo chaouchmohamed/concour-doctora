@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Lock,
   Unlock,
@@ -24,12 +24,14 @@ import { AppShell } from "../components/AppShell";
 import { Card } from "../components/UI";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../constants";
+import { api, DeliberationResult, ExamSession, OfficialResult } from "../lib/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type CandidateStatus = "ADMITTED" | "WAITING_LIST" | "REJECTED";
 
 interface Candidate {
+  candidateId?: number;
   rank: number;
   code: string;
   realName?: string;
@@ -37,6 +39,22 @@ interface Candidate {
   subjects: { name: string; grade: number; coeff: number }[];
   status: CandidateStatus;
 }
+
+const applyDecisionRules = (
+  items: Candidate[],
+  threshold: number,
+  quota: number,
+): Candidate[] => {
+  return items.map((candidate, index) => {
+    if (candidate.avg < threshold) {
+      return { ...candidate, status: "REJECTED" };
+    }
+    if (index < quota) {
+      return { ...candidate, status: "ADMITTED" };
+    }
+    return { ...candidate, status: "WAITING_LIST" };
+  });
+};
 
 // ─── Mock data ────────────────────────────────────────────────────────────────
 
@@ -153,11 +171,13 @@ const statusLabel: Record<CandidateStatus, string> = {
 // ─── Close Deliberation Modal ─────────────────────────────────────────────────
 
 const CloseModal = ({
+  candidates,
   onClose,
   onConfirm,
 }: {
+  candidates: Candidate[];
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: () => Promise<void> | void;
 }) => {
   const [step, setStep] = useState<"confirm" | "signing" | "done">("confirm");
   const [signed, setSigned] = useState<Record<string, boolean>>({});
@@ -172,11 +192,10 @@ const CloseModal = ({
   };
 
   const handleComplete = () => {
-    setStep("done");
-    setTimeout(() => {
-      onConfirm();
-      onClose();
-    }, 1200);
+    Promise.resolve(onConfirm()).then(() => {
+      setStep("done");
+      setTimeout(onClose, 1200);
+    });
   };
 
   return (
@@ -228,24 +247,24 @@ const CloseModal = ({
                 {[
                   {
                     label: "Total candidates ranked",
-                    value: mockCandidates.length,
+                    value: candidates.length,
                   },
                   {
                     label: "Admitted",
-                    value: mockCandidates.filter((c) => c.status === "ADMITTED")
+                    value: candidates.filter((c) => c.status === "ADMITTED")
                       .length,
                     cls: "text-emerald-600 font-bold",
                   },
                   {
                     label: "Waiting list",
-                    value: mockCandidates.filter(
+                    value: candidates.filter(
                       (c) => c.status === "WAITING_LIST",
                     ).length,
                     cls: "text-amber-600 font-bold",
                   },
                   {
                     label: "Rejected",
-                    value: mockCandidates.filter((c) => c.status === "REJECTED")
+                    value: candidates.filter((c) => c.status === "REJECTED")
                       .length,
                     cls: "text-gray-500 font-bold",
                   },
@@ -372,16 +391,31 @@ const CloseModal = ({
 
 // ─── PV Modal ─────────────────────────────────────────────────────────────────
 
-const PVModal = ({ onClose }: { onClose: () => void }) => {
+const PVModal = ({
+  candidates,
+  session,
+  onClose,
+}: {
+  candidates: Candidate[];
+  session: ExamSession | null;
+  onClose: () => void;
+}) => {
   const [generating, setGenerating] = useState(false);
   const [done, setDone] = useState(false);
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
+    if (!session) return;
     setGenerating(true);
-    setTimeout(() => {
+    try {
+      const pv = await api.pv.generate(session.id, `PV of Deliberation - ${session.name}`);
+      setDownloadUrl(pv.pdf_file);
       setGenerating(false);
       setDone(true);
-    }, 1800);
+    } catch (error) {
+      console.error(error);
+      setGenerating(false);
+    }
   };
 
   return (
@@ -417,6 +451,11 @@ const PVModal = ({ onClose }: { onClose: () => void }) => {
               </p>
               <button
                 type="button"
+                onClick={() => {
+                  if (downloadUrl) {
+                    window.open(downloadUrl, "_blank", "noopener,noreferrer");
+                  }
+                }}
                 className="flex items-center gap-2 mx-auto px-4 py-2 rounded-xl bg-primary-accent text-white text-xs font-bold hover:opacity-90 transition-opacity"
               >
                 <Download size={13} /> Download PDF
@@ -428,19 +467,19 @@ const PVModal = ({ onClose }: { onClose: () => void }) => {
                 {[
                   [
                     "Document ID",
-                    `PV-DEL-2026-${Math.floor(Math.random() * 9000) + 1000}`,
+                    `PV-DEL-${session?.year ?? new Date().getFullYear()}-${Math.floor(Math.random() * 9000) + 1000}`,
                   ],
                   [
                     "Admitted",
-                    `${mockCandidates.filter((c) => c.status === "ADMITTED").length} candidates`,
+                    `${candidates.filter((c) => c.status === "ADMITTED").length} candidates`,
                   ],
                   [
                     "Waiting list",
-                    `${mockCandidates.filter((c) => c.status === "WAITING_LIST").length} candidates`,
+                    `${candidates.filter((c) => c.status === "WAITING_LIST").length} candidates`,
                   ],
                   [
                     "Rejected",
-                    `${mockCandidates.filter((c) => c.status === "REJECTED").length} candidates`,
+                    `${candidates.filter((c) => c.status === "REJECTED").length} candidates`,
                   ],
                   ["Timestamp", new Date().toLocaleString()],
                 ].map(([k, v]) => (
@@ -461,7 +500,7 @@ const PVModal = ({ onClose }: { onClose: () => void }) => {
                 <button
                   type="button"
                   onClick={handleGenerate}
-                  disabled={generating}
+                  disabled={generating || !session}
                   className="flex-1 py-2.5 rounded-xl bg-[#8B7355] text-white text-xs font-bold hover:bg-[#7a6449] transition-colors flex items-center justify-center gap-2"
                 >
                   {generating ? (
@@ -610,6 +649,9 @@ export const DeliberationPage = () => {
   const [showPV, setShowPV] = useState(false);
   const [threshold, setThreshold] = useState(10.0);
   const [quota, setQuota] = useState(45);
+  const [session, setSession] = useState<ExamSession | null>(null);
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [loading, setLoading] = useState(true);
   const [checklist, setChecklist] = useState([
     { label: "All subjects validated", checked: true },
     { label: "Attendance PVs signed", checked: true },
@@ -618,6 +660,74 @@ export const DeliberationPage = () => {
   ]);
   const [applyDone, setApplyDone] = useState(false);
 
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      try {
+        const sessionRes = await api.sessions.list();
+        const selectedSession =
+          sessionRes.results.find((item) => item.status === "ACTIVE") ??
+          sessionRes.results.find((item) => item.status === "CLOSED") ??
+          sessionRes.results[0] ??
+          null;
+
+        setSession(selectedSession);
+
+        if (!selectedSession) {
+          setCandidates([]);
+          return;
+        }
+
+        if (selectedSession.status === "CLOSED") {
+          const results = await api.deliberation.results(selectedSession.id);
+          const mappedClosed = results.map((item: OfficialResult) => ({
+            rank: item.rank,
+            code: item.application_number,
+            realName: item.candidate_name,
+            avg: Number(item.final_score),
+            subjects: [],
+            status:
+              item.decision === "WAITLIST"
+                ? "WAITING_LIST"
+                : (item.decision as CandidateStatus),
+          }));
+          setCandidates(mappedClosed);
+          setIsClosed(true);
+          setShowReal(true);
+          return;
+        }
+
+        const ranking = await api.deliberation.ranking(selectedSession.id);
+        const mappedRanking = applyDecisionRules(
+          ranking.map((item: DeliberationResult) => ({
+            candidateId: item.candidate_id,
+            rank: item.rank,
+            code: item.anonymous_code ?? `Candidate ${item.candidate_id}`,
+            avg: item.final_score,
+            subjects: [],
+            status: "REJECTED",
+          })),
+          threshold,
+          quota,
+        );
+        setCandidates(mappedRanking);
+      } catch (error) {
+        console.error(error);
+        setCandidates([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void load();
+  }, []);
+
+  useEffect(() => {
+    if (isClosed) return;
+    setCandidates((prev) => applyDecisionRules(prev, threshold, quota));
+  }, [threshold, quota, isClosed]);
+
+  const mockCandidates = candidates;
   const admitted = mockCandidates.filter((c) => c.status === "ADMITTED").length;
   const waitlist = mockCandidates.filter(
     (c) => c.status === "WAITING_LIST",
@@ -627,7 +737,33 @@ export const DeliberationPage = () => {
     mockCandidates.filter((c) => c.status === "ADMITTED").at(-1)?.avg ?? 0;
   const checklistOk = checklist.every((i) => i.checked);
 
-  const handleConfirmClose = () => {
+  const handleConfirmClose = async () => {
+    if (!session) return;
+    await api.deliberation.closeSession(
+      session.id,
+      mockCandidates.map((candidate) => ({
+        candidate_id: candidate.candidateId,
+        final_score: candidate.avg,
+        decision:
+          candidate.status === "WAITING_LIST" ? "WAITLIST" : candidate.status,
+        rank: candidate.rank,
+      })),
+    );
+    const results = await api.deliberation.results(session.id);
+    setCandidates(
+      results.map((item: OfficialResult) => ({
+        rank: item.rank,
+        code: item.application_number,
+        realName: item.candidate_name,
+        avg: Number(item.final_score),
+        subjects: [],
+        status:
+          item.decision === "WAITLIST"
+            ? "WAITING_LIST"
+            : (item.decision as CandidateStatus),
+      })),
+    );
+    setSession((prev) => (prev ? { ...prev, status: "CLOSED" } : prev));
     setIsClosed(true);
     setShowReal(true);
     setChecklist((prev) => prev.map((i) => ({ ...i, checked: true })));
@@ -652,11 +788,18 @@ export const DeliberationPage = () => {
       <AnimatePresence>
         {showClose && (
           <CloseModal
+            candidates={mockCandidates}
             onClose={() => setShowClose(false)}
             onConfirm={handleConfirmClose}
           />
         )}
-        {showPV && <PVModal onClose={() => setShowPV(false)} />}
+        {showPV && (
+          <PVModal
+            candidates={mockCandidates}
+            session={session}
+            onClose={() => setShowPV(false)}
+          />
+        )}
       </AnimatePresence>
 
       <div className="flex flex-col gap-4 h-full">
@@ -716,10 +859,10 @@ export const DeliberationPage = () => {
               <button
                 type="button"
                 onClick={() => setShowClose(true)}
-                disabled={!checklistOk}
+                disabled={!checklistOk || !session || mockCandidates.length === 0}
                 className={cn(
                   "flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all",
-                  checklistOk
+                  checklistOk && session && mockCandidates.length > 0
                     ? "bg-[#8B7355] text-white hover:bg-[#7a6449] shadow-sm"
                     : "bg-gray-200 text-gray-400 cursor-not-allowed",
                 )}
@@ -731,6 +874,7 @@ export const DeliberationPage = () => {
                 <button
                   type="button"
                   onClick={() => setShowPV(true)}
+                  disabled={!session}
                   className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-emerald-300 text-emerald-700 text-sm font-semibold hover:bg-emerald-50 transition-colors"
                 >
                   <FileSignature size={15} /> Generate PV
@@ -738,6 +882,7 @@ export const DeliberationPage = () => {
                 <button
                   type="button"
                   onClick={() => setShowPV(true)}
+                  disabled={!session}
                   className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors"
                 >
                   <Download size={15} /> Publish Results
@@ -857,6 +1002,17 @@ export const DeliberationPage = () => {
                         showReal={showReal}
                       />
                     ))}
+                    {mockCandidates.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="p-8 text-center text-xs text-muted">
+                          {loading
+                            ? "Loading ranking..."
+                            : session
+                              ? "No candidates are available for deliberation in this session."
+                              : "No exam session is available yet."}
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
