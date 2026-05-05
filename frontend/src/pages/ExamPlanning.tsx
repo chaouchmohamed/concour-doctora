@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Calendar,
   Clock,
@@ -26,6 +26,7 @@ import { AppShell } from "../components/AppShell";
 import { Card } from "../components/UI";
 import { cn } from "../constants";
 import { motion, AnimatePresence } from "motion/react";
+import { api } from "../lib/api";
 
 type Exam = {
   id: string;
@@ -39,64 +40,21 @@ type Exam = {
 };
 type Room = { id: string; name: string; capacity: number; building: string };
 
-const INIT_EXAMS: Exam[] = [
-  {
-    id: "1",
-    subject: "Mathematics & Logic",
-    date: "2026-03-10",
-    time: "09:00",
-    duration: "3h",
-    rooms: ["A101", "A102"],
-    status: "SCHEDULED",
-    coefficient: 3,
-  },
-  {
-    id: "2",
-    subject: "English Proficiency",
-    date: "2026-03-10",
-    time: "14:00",
-    duration: "2h",
-    rooms: ["B204"],
-    status: "ACTIVE",
-    coefficient: 2,
-  },
-  {
-    id: "3",
-    subject: "Specialty: Computer Science",
-    date: "2026-03-11",
-    time: "09:00",
-    duration: "3h",
-    rooms: ["C301", "C302"],
-    status: "DRAFT",
-    coefficient: 4,
-  },
-  {
-    id: "4",
-    subject: "General Knowledge",
-    date: "2026-03-12",
-    time: "09:00",
-    duration: "2h",
-    rooms: ["A101"],
-    status: "LOCKED",
-    coefficient: 1,
-  },
-];
-const INIT_ROOMS: Room[] = [
-  { id: "r1", name: "A101", capacity: 53, building: "Block A" },
-  { id: "r2", name: "A102", capacity: 75, building: "Block A" },
-  { id: "r3", name: "B204", capacity: 76, building: "Block B" },
-  { id: "r4", name: "C301", capacity: 56, building: "Block C" },
-  { id: "r5", name: "C302", capacity: 49, building: "Block C" },
-];
-const SUBJECTS = [
-  "Mathematics & Logic",
-  "English Proficiency",
-  "Specialty: Computer Science",
-  "General Knowledge",
-  "Physics",
-  "Chemistry",
-  "Biology",
-];
+
+// ─── Duration helpers ─────────────────────────────────────────────────────────
+const durationToMinutes = (d: string): number => {
+  const map: Record<string, number> = { '1h': 60, '1h30': 90, '2h': 120, '2h30': 150, '3h': 180, '3h30': 210, '4h': 240 };
+  return map[d] ?? 120;
+};
+const minutesToDuration = (m: number): string => {
+  if (m <= 60) return '1h';
+  if (m <= 90) return '1h30';
+  if (m <= 120) return '2h';
+  if (m <= 150) return '2h30';
+  if (m <= 180) return '3h';
+  if (m <= 210) return '3h30';
+  return '4h';
+};
 const DURATIONS = ["1h", "1h30", "2h", "2h30", "3h", "3h30", "4h"];
 const BUILDINGS = ["Block A", "Block B", "Block C", "Block D"];
 const STATUS_KEYS = ["SCHEDULED", "ACTIVE", "DRAFT", "LOCKED"];
@@ -114,19 +72,21 @@ const statusLabel: Record<string, string> = {
   LOCKED: "Locked",
 };
 const blankExam = {
-  subject: SUBJECTS[0],
+  subject: "",
   date: "",
   time: "09:00",
   duration: "2h",
   rooms: [] as string[],
-  status: "SCHEDULED",
+  status: "DRAFT",
   coefficient: 1,
 };
 const blankRoom = { name: "", capacity: 30, building: BUILDINGS[0] };
 
 export const ExamPlanningPage = () => {
-  const [exams, setExams] = useState<Exam[]>(INIT_EXAMS);
-  const [rooms, setRooms] = useState<Room[]>(INIT_ROOMS);
+  const [exams, setExams] = useState<Exam[]>([]);
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [sessionId, setSessionId] = useState<number | null>(null);
 
   const [showLottery, setShowLottery] = useState(false);
   const [selectedVersion, setSelectedVersion] = useState<string | null>(null);
@@ -146,6 +106,38 @@ export const ExamPlanningPage = () => {
   const [editExam, setEditExam] = useState<Exam | null>(null);
   const [editForm, setEditForm] = useState<Partial<Exam>>({});
   const [deleteExam, setDeleteExam] = useState<Exam | null>(null);
+
+  // ── Load data from API ────────────────────────────────────────────────────
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      try {
+        const sessRes = await api.sessions.list();
+        const active = sessRes.results.find(s => s.status === 'ACTIVE') ?? sessRes.results[0] ?? null;
+        if (!active) { setLoading(false); return; }
+        setSessionId(active.id);
+        const subRes = await api.subjects.list(active.id);
+        const mapped: Exam[] = subRes.results.map(s => ({
+          id: String(s.id),
+          subject: s.name,
+          date: s.scheduled_date ?? '',
+          time: s.start_time ?? '09:00',
+          duration: minutesToDuration(s.duration_minutes),
+          rooms: s.room_name ? [s.room_name] : [],
+          status: s.status,
+          coefficient: Number(s.coefficient),
+        }));
+        setExams(mapped);
+        const roomNames = [...new Set(subRes.results.filter(s => s.room_name).map(s => s.room_name!))];
+        setRooms(roomNames.map((name, i) => ({ id: `r${i}`, name, capacity: 50, building: '' })));
+      } catch (err) {
+        console.error('Failed to load exam planning:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
 
   // ── Lottery ──────────────────────────────────────────────────────────────
   const handleLottery = () => {
@@ -181,25 +173,36 @@ export const ExamPlanningPage = () => {
         ? p.rooms.filter((x) => x !== r)
         : [...p.rooms, r],
     }));
-  const submitExam = () => {
-    if (examStep === 1) {
-      setExamStep(2);
-      return;
+  const submitExam = async () => {
+    if (examStep === 1) { setExamStep(2); return; }
+    if (!sessionId) return;
+    try {
+      const created = await api.subjects.create({
+        name: examForm.subject,
+        scheduled_date: examForm.date || null,
+        start_time: examForm.time || null,
+        duration_minutes: durationToMinutes(examForm.duration),
+        status: 'DRAFT',
+        coefficient: String(examForm.coefficient),
+        max_score: '20',
+        discrepancy_threshold: '3',
+        final_grade_rule: 'AVERAGE',
+        exam_session: sessionId,
+      });
+      setExams(p => [...p, {
+        id: String(created.id),
+        subject: created.name,
+        date: created.scheduled_date ?? '',
+        time: created.start_time ?? '09:00',
+        duration: minutesToDuration(created.duration_minutes),
+        rooms: created.room_name ? [created.room_name] : [],
+        status: created.status,
+        coefficient: Number(created.coefficient),
+      }]);
+      setExamDone(true);
+    } catch (err) {
+      console.error('Failed to create exam:', err);
     }
-    setExams((p) => [
-      ...p,
-      {
-        id: String(p.length + 1),
-        subject: examForm.subject,
-        date: examForm.date,
-        time: examForm.time,
-        duration: examForm.duration,
-        rooms: examForm.rooms,
-        status: examForm.status,
-        coefficient: examForm.coefficient,
-      },
-    ]);
-    setExamDone(true);
   };
 
   // ── Add Room ──────────────────────────────────────────────────────────────
@@ -227,23 +230,38 @@ export const ExamPlanningPage = () => {
   };
 
   // ── Edit / Lock / Delete ──────────────────────────────────────────────────
-  const saveEditExam = () => {
+  const saveEditExam = async () => {
     if (!editExam) return;
-    setExams((p) =>
-      p.map((e) => (e.id === editExam.id ? { ...e, ...editForm } : e)),
-    );
-    setEditExam(null);
+    try {
+      await api.subjects.update(Number(editExam.id), {
+        name: editForm.subject,
+        scheduled_date: editForm.date ?? null,
+        start_time: editForm.time ?? null,
+        duration_minutes: durationToMinutes(editForm.duration ?? '2h'),
+        coefficient: String(editForm.coefficient),
+      });
+      setExams(p => p.map(e => e.id === editExam.id ? { ...e, ...editForm } : e));
+      setEditExam(null);
+    } catch (err) { console.error('Failed to update exam:', err); }
   };
-  const toggleLock = (id: string) =>
-    setExams((p) =>
-      p.map((e) =>
-        e.id === id
-          ? { ...e, status: e.status === "LOCKED" ? "SCHEDULED" : "LOCKED" }
-          : e,
-      ),
-    );
-  const confirmDelete = () => {
-    if (deleteExam) setExams((p) => p.filter((e) => e.id !== deleteExam.id));
+  const toggleLock = async (id: string) => {
+    const exam = exams.find(e => e.id === id);
+    if (!exam) return;
+    try {
+      if (exam.status === 'LOCKED') {
+        await api.subjects.update(Number(id), { status: 'ACTIVE' });
+      } else {
+        await api.subjects.lock(Number(id));
+      }
+      setExams(p => p.map(e => e.id === id ? { ...e, status: e.status === 'LOCKED' ? 'ACTIVE' : 'LOCKED' } : e));
+    } catch (err) { console.error('Failed to toggle lock:', err); }
+  };
+  const confirmDelete = async () => {
+    if (!deleteExam) return;
+    try {
+      await api.subjects.delete(Number(deleteExam.id));
+      setExams(p => p.filter(e => e.id !== deleteExam.id));
+    } catch (err) { console.error('Failed to delete exam:', err); }
     setDeleteExam(null);
   };
 
@@ -674,7 +692,8 @@ export const ExamPlanningPage = () => {
                     className="space-y-4"
                   >
                     <MField label="Subject" icon={<BookOpen size={12} />}>
-                      <select
+                      <input
+                        type="text"
                         value={examForm.subject}
                         onChange={(e) =>
                           setExamForm((p) => ({
@@ -682,12 +701,9 @@ export const ExamPlanningPage = () => {
                             subject: e.target.value,
                           }))
                         }
+                        placeholder="e.g. Mathematics & Logic"
                         className="fi"
-                      >
-                        {SUBJECTS.map((s) => (
-                          <option key={s}>{s}</option>
-                        ))}
-                      </select>
+                      />
                     </MField>
                     <div className="grid grid-cols-2 gap-3">
                       <MField label="Date" icon={<Calendar size={12} />}>
@@ -1083,17 +1099,15 @@ export const ExamPlanningPage = () => {
               </div>
               <div className="space-y-3">
                 <MField label="Subject" icon={<BookOpen size={12} />}>
-                  <select
+                  <input
+                    type="text"
                     value={editForm.subject || ""}
                     onChange={(e) =>
                       setEditForm((p) => ({ ...p, subject: e.target.value }))
                     }
+                    placeholder="Subject name"
                     className="fi"
-                  >
-                    {SUBJECTS.map((s) => (
-                      <option key={s}>{s}</option>
-                    ))}
-                  </select>
+                  />
                 </MField>
                 <div className="grid grid-cols-2 gap-3">
                   <MField label="Date" icon={<Calendar size={12} />}>

@@ -56,100 +56,7 @@ const applyDecisionRules = (
   });
 };
 
-// ─── Mock data ────────────────────────────────────────────────────────────────
 
-const mockCandidates: Candidate[] = [
-  {
-    rank: 1,
-    code: "DOCT-2026-042",
-    realName: "Amine Benali",
-    avg: 17.45,
-    status: "ADMITTED",
-    subjects: [
-      { name: "Math", grade: 18.5, coeff: 3 },
-      { name: "English", grade: 16.4, coeff: 2 },
-      { name: "Specialty", grade: 17.2, coeff: 4 },
-    ],
-  },
-  {
-    rank: 2,
-    code: "DOCT-2026-118",
-    realName: "Sara Khelil",
-    avg: 16.82,
-    status: "ADMITTED",
-    subjects: [
-      { name: "Math", grade: 15.0, coeff: 3 },
-      { name: "English", grade: 18.6, coeff: 2 },
-      { name: "Specialty", grade: 16.8, coeff: 4 },
-    ],
-  },
-  {
-    rank: 3,
-    code: "DOCT-2026-009",
-    realName: "Youcef Hamdi",
-    avg: 16.1,
-    status: "ADMITTED",
-    subjects: [
-      { name: "Math", grade: 17.2, coeff: 3 },
-      { name: "English", grade: 15.0, coeff: 2 },
-      { name: "Specialty", grade: 15.9, coeff: 4 },
-    ],
-  },
-  {
-    rank: 4,
-    code: "DOCT-2026-254",
-    realName: "Nadia Boudjema",
-    avg: 15.95,
-    status: "WAITING_LIST",
-    subjects: [
-      { name: "Math", grade: 14.5, coeff: 3 },
-      { name: "English", grade: 17.4, coeff: 2 },
-      { name: "Specialty", grade: 16.0, coeff: 4 },
-    ],
-  },
-  {
-    rank: 5,
-    code: "DOCT-2026-087",
-    realName: "Karim Meziane",
-    avg: 15.42,
-    status: "WAITING_LIST",
-    subjects: [
-      { name: "Math", grade: 16.0, coeff: 3 },
-      { name: "English", grade: 14.8, coeff: 2 },
-      { name: "Specialty", grade: 15.5, coeff: 4 },
-    ],
-  },
-  {
-    rank: 6,
-    code: "DOCT-2026-156",
-    realName: "Fatima Zouaoui",
-    avg: 14.2,
-    status: "REJECTED",
-    subjects: [
-      { name: "Math", grade: 12.0, coeff: 3 },
-      { name: "English", grade: 16.4, coeff: 2 },
-      { name: "Specialty", grade: 14.0, coeff: 4 },
-    ],
-  },
-  {
-    rank: 7,
-    code: "DOCT-2026-203",
-    realName: "Omar Bensalem",
-    avg: 11.8,
-    status: "REJECTED",
-    subjects: [
-      { name: "Math", grade: 10.5, coeff: 3 },
-      { name: "English", grade: 13.0, coeff: 2 },
-      { name: "Specialty", grade: 12.1, coeff: 4 },
-    ],
-  },
-];
-
-const juryMembers = [
-  "Prof. Malki Mimoun",
-  "Dr. Malki Abdelhamid",
-  "Prof. Kechar Mohamed",
-];
 
 // ─── Status pill ──────────────────────────────────────────────────────────────
 
@@ -174,10 +81,12 @@ const CloseModal = ({
   candidates,
   onClose,
   onConfirm,
+  juryMembers,
 }: {
   candidates: Candidate[];
   onClose: () => void;
   onConfirm: () => Promise<void> | void;
+  juryMembers: string[];
 }) => {
   const [step, setStep] = useState<"confirm" | "signing" | "done">("confirm");
   const [signed, setSigned] = useState<Record<string, boolean>>({});
@@ -651,6 +560,7 @@ export const DeliberationPage = () => {
   const [quota, setQuota] = useState(45);
   const [session, setSession] = useState<ExamSession | null>(null);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [juryMembers, setJuryMembers] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [checklist, setChecklist] = useState([
     { label: "All subjects validated", checked: true },
@@ -672,6 +582,11 @@ export const DeliberationPage = () => {
           null;
 
         setSession(selectedSession);
+
+        // Fetch jury members
+        api.users.list('role=JURY_MEMBER')
+          .then(res => setJuryMembers(res.results.map(u => u.full_name || u.username)))
+          .catch(console.error);
 
         if (!selectedSession) {
           setCandidates([]);
@@ -791,6 +706,7 @@ export const DeliberationPage = () => {
             candidates={mockCandidates}
             onClose={() => setShowClose(false)}
             onConfirm={handleConfirmClose}
+            juryMembers={juryMembers}
           />
         )}
         {showPV && (

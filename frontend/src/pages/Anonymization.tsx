@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   ShieldCheck,
   Upload,
@@ -28,6 +28,7 @@ import { AppShell } from "../components/AppShell";
 import { Card, Button } from "../components/UI";
 import { cn } from "../constants";
 import { motion, AnimatePresence } from "motion/react";
+import { api } from "../lib/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -43,66 +44,7 @@ interface Mapping {
   flaggedIdentity?: boolean;
 }
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
 
-const initialMappings: Mapping[] = [
-  {
-    id: "1",
-    candidateId: "DOCT-2026-001",
-    anonymousCode: "ANO-7F3A92",
-    scanFile: "scan_001.pdf",
-    status: "MAPPED",
-    pages: 4,
-  },
-  {
-    id: "2",
-    candidateId: "DOCT-2026-002",
-    anonymousCode: "ANO-B1E4D8",
-    scanFile: "scan_002.pdf",
-    status: "MAPPED",
-    pages: 4,
-  },
-  {
-    id: "3",
-    candidateId: "DOCT-2026-003",
-    anonymousCode: "ANO-9C2F15",
-    scanFile: null,
-    status: "MISSING_SCAN",
-    pages: 0,
-  },
-  {
-    id: "4",
-    candidateId: "DOCT-2026-004",
-    anonymousCode: "ANO-4D8E71",
-    scanFile: "scan_004.pdf",
-    status: "MAPPED",
-    pages: 3,
-  },
-  {
-    id: "5",
-    candidateId: "DOCT-2026-005",
-    anonymousCode: null,
-    scanFile: null,
-    status: "PENDING",
-    pages: 0,
-  },
-  {
-    id: "6",
-    candidateId: "DOCT-2026-006",
-    anonymousCode: "ANO-F6A023",
-    scanFile: "scan_006_err.pdf",
-    status: "ERROR",
-    pages: 2,
-  },
-  {
-    id: "7",
-    candidateId: "DOCT-2026-007",
-    anonymousCode: "ANO-2B9D44",
-    scanFile: "scan_007.pdf",
-    status: "MAPPED",
-    pages: 4,
-  },
-];
 
 // ─── Status config ────────────────────────────────────────────────────────────
 
@@ -156,14 +98,21 @@ const UploadScanModal = ({
     if (e.target.files?.[0]) setFile(e.target.files[0]);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!file) return;
     setUploading(true);
-    setTimeout(() => {
-      onSave(mapping.id, file.name);
-      setUploading(false);
+    try {
+      const form = new FormData();
+      form.append('scan_file', file);
+      if (manualCode) form.append('anonymous_code_value', manualCode);
+      const result = await api.copies.upload(form);
+      onSave(mapping.id, result.scan_file || file.name);
       onClose();
-    }, 1200);
+    } catch (err) {
+      console.error('Upload failed:', err);
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -455,56 +404,87 @@ const FilterDropdown = ({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export const AnonymizationPage = () => {
-  const [mappings, setMappings] = useState<Mapping[]>(initialMappings);
+  const [mappings, setMappings] = useState<Mapping[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showIdentities, setShowIdentities] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [search, setSearch] = useState("");
-  const [filterStatus, setFilterStatus] = useState<MappingStatus | "ALL">(
-    "ALL",
-  );
+  const [filterStatus, setFilterStatus] = useState<MappingStatus | "ALL">("ALL");
   const [uploadTarget, setUploadTarget] = useState<Mapping | null>(null);
   const [showPV, setShowPV] = useState(false);
   const [generatedCount, setGeneratedCount] = useState(0);
 
-  // Stats derived from live mappings
-  const total = mappings.length + 1241; // simulating large dataset
-  const mapped = mappings.filter((m) => m.status === "MAPPED").length + 1183;
-  const missing =
-    mappings.filter((m) => m.status === "MISSING_SCAN").length + 35;
-  const pending = mappings.filter((m) => m.status === "PENDING").length + 11;
-  const errors = mappings.filter((m) => m.status === "ERROR").length + 7;
-  const mappedPercent = Math.round((mapped / total) * 100);
+  // Load candidates + copies from API
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      try {
+        const [candidates, copiesRes] = await Promise.all([
+          api.candidates.listAll(),
+          api.copies.list(),
+        ]);
+        const copiesByCode = new Map<string, typeof copiesRes.results[0]>();
+        copiesRes.results.forEach(c => copiesByCode.set(c.anonymous_code_value, c));
+        const mapped: Mapping[] = candidates.map(c => {
+          if (!c.anonymous_code) return {
+            id: String(c.id), candidateId: c.application_number,
+            anonymousCode: null, scanFile: null, status: 'PENDING' as MappingStatus, pages: 0,
+          };
+          const copy = copiesByCode.get(c.anonymous_code);
+          if (!copy) return {
+            id: String(c.id), candidateId: c.application_number,
+            anonymousCode: c.anonymous_code, scanFile: null, status: 'MISSING_SCAN' as MappingStatus, pages: 0,
+          };
+          return {
+            id: String(c.id), candidateId: c.application_number,
+            anonymousCode: c.anonymous_code, scanFile: copy.scan_file,
+            status: (copy.qr_detected ? 'MAPPED' : 'ERROR') as MappingStatus, pages: copy.page_count,
+          };
+        });
+        setMappings(mapped);
+      } catch (err) { console.error('Failed to load anonymization data:', err); }
+      finally { setLoading(false); }
+    };
+    load();
+  }, []);
 
-  // Generate codes for PENDING entries
-  const handleGenerateCodes = () => {
+  // Stats derived from live mappings
+  const total = mappings.length;
+  const mapped = mappings.filter((m) => m.status === "MAPPED").length;
+  const missing = mappings.filter((m) => m.status === "MISSING_SCAN").length;
+  const pending = mappings.filter((m) => m.status === "PENDING").length;
+  const errors = mappings.filter((m) => m.status === "ERROR").length;
+  const mappedPercent = total > 0 ? Math.round((mapped / total) * 100) : 0;
+
+  // Generate codes for PENDING entries via API
+  const handleGenerateCodes = async () => {
     setIsGenerating(true);
-    setTimeout(() => {
-      const count = mappings.filter((m) => m.status === "PENDING").length;
-      setMappings((prev) =>
-        prev.map((m) => {
-          if (m.status !== "PENDING") return m;
-          const code =
-            "ANO-" + Math.random().toString(36).substring(2, 8).toUpperCase();
-          return { ...m, anonymousCode: code, status: "MISSING_SCAN" };
-        }),
-      );
+    try {
+      const pendingItems = mappings.filter(m => m.status === 'PENDING');
+      let count = 0;
+      for (const m of pendingItems) {
+        try {
+          await api.candidates.generateCode(Number(m.id));
+          count++;
+        } catch { /* skip failed */ }
+      }
       setGeneratedCount(count);
-      setIsGenerating(false);
-    }, 2500);
+      // Reload mapping to get fresh codes
+      const fresh = await api.candidates.listAll();
+      setMappings(prev => prev.map(m => {
+        const c = fresh.find(f => String(f.id) === m.id);
+        if (!c?.anonymous_code) return m;
+        return { ...m, anonymousCode: c.anonymous_code, status: m.scanFile ? 'MAPPED' : 'MISSING_SCAN' };
+      }));
+    } catch (err) { console.error('Failed to generate codes:', err); }
+    finally { setIsGenerating(false); }
   };
 
-  // Save uploaded scan
+  // Update local state after scan uploaded
   const handleSaveScan = (id: string, fileName: string) => {
     setMappings((prev) =>
       prev.map((m) =>
-        m.id === id
-          ? {
-              ...m,
-              scanFile: fileName,
-              status: "MAPPED",
-              pages: Math.floor(Math.random() * 3) + 3,
-            }
-          : m,
+        m.id === id ? { ...m, scanFile: fileName, status: 'MAPPED', pages: 0 } : m,
       ),
     );
   };

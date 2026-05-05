@@ -290,19 +290,23 @@ const CfdHeadDashboard = ({ name, stats }: { name: string; stats: DashboardStats
       {[
         {
           label: "Exams Planned",
-          value: "3",
+          value: stats?.subjects_by_status
+            ? stats.subjects_by_status.reduce((s, v) => s + v.count, 0).toLocaleString()
+            : "—",
           icon: Calendar,
           iconBg: "bg-orange-50 text-orange-500",
         },
         {
           label: "Subjects Ready",
-          value: "3",
+          value: stats?.subjects_by_status
+            ? (stats.subjects_by_status.find((s) => s.status === "ACTIVE")?.count ?? 0).toLocaleString()
+            : "—",
           icon: BookOpen,
           iconBg: "bg-blue-50 text-blue-500",
         },
         {
-          label: "Rooms Assigned",
-          value: "5",
+          label: "Session",
+          value: stats?.active_session?.name ?? "No active session",
           icon: MapPin,
           iconBg: "bg-purple-50 text-purple-500",
         },
@@ -411,54 +415,22 @@ const CoordinatorDashboard = ({ name, stats }: { name: string; stats: DashboardS
             Discrepancies
           </h3>
           <div className="flex-1 overflow-y-auto space-y-2">
-            {[
-              {
-                code: "ANO-9C2F15",
-                subject: "English",
-                delta: "6.50",
-                sev: "Critical",
-                cls: "bg-red-50 text-red-700 border-red-200",
-              },
-              {
-                code: "ANO-2B9D44",
-                subject: "English",
-                delta: "5.00",
-                sev: "High",
-                cls: "bg-amber-50 text-amber-700 border-amber-200",
-              },
-              {
-                code: "ANO-7F3A92",
-                subject: "Mathematics",
-                delta: "4.50",
-                sev: "High",
-                cls: "bg-amber-50 text-amber-700 border-amber-200",
-              },
-            ].map((d, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between p-3 bg-[#FAFAFA] rounded-xl border border-[#F0F0F0]"
-              >
-                <div>
-                  <p className="text-[13px] font-bold font-mono text-[#1A1A1A]">
-                    {d.code}
-                  </p>
-                  <p className="text-[11px] text-[#9B9B9B]">{d.subject}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[13px] font-bold text-red-500">
-                    Δ {d.delta} pts
-                  </p>
-                  <span
-                    className={cn(
-                      "text-[10px] font-bold px-2 py-0.5 rounded-full border",
-                      d.cls,
-                    )}
-                  >
-                    {d.sev}
-                  </span>
-                </div>
+            {(stats?.active_discrepancies ?? 0) > 0 ? (
+              <div className="flex flex-col items-center justify-center h-full gap-3 py-8">
+                <AlertTriangle size={28} className="text-red-400" />
+                <p className="text-[15px] font-bold text-[#1A1A1A]">
+                  {stats!.active_discrepancies} active discrepanc{stats!.active_discrepancies === 1 ? "y" : "ies"}
+                </p>
+                <p className="text-[12px] text-[#9B9B9B] text-center">
+                  Open the Discrepancies page to review and assign third correctors.
+                </p>
               </div>
-            ))}
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full gap-2 py-8">
+                <CheckCircle2 size={28} className="text-emerald-500" />
+                <p className="text-[13px] font-semibold text-[#1A1A1A]">All discrepancies resolved</p>
+              </div>
+            )}
           </div>
         </Card>
       </div>
@@ -539,52 +511,23 @@ const CorrectorDashboard = ({ name, stats }: { name: string; stats: DashboardSta
             My Assigned Copies
           </h3>
           <div className="flex-1 overflow-y-auto space-y-2">
-            {[
-              {
-                code: "DOCT-2026-042",
-                subject: "Mathematics & Logic",
-                status: "Pending",
-                cls: "bg-gray-100 text-gray-500 border-gray-200",
-              },
-              {
-                code: "DOCT-2026-051",
-                subject: "Mathematics & Logic",
-                status: "1 Grade",
-                cls: "bg-blue-50 text-blue-600 border-blue-200",
-              },
-              {
-                code: "DOCT-2026-063",
-                subject: "Research Methodology",
-                status: "Discrepancy",
-                cls: "bg-red-50 text-red-600 border-red-200",
-              },
-              {
-                code: "DOCT-2026-077",
-                subject: "Mathematics & Logic",
-                status: "Locked",
-                cls: "bg-emerald-50 text-emerald-600 border-emerald-200",
-              },
-            ].map((c, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between p-3 bg-[#FAFAFA] rounded-xl border border-[#F0F0F0]"
-              >
-                <div>
-                  <p className="text-[13px] font-bold font-mono text-[#1A1A1A]">
-                    {c.code}
-                  </p>
-                  <p className="text-[11px] text-[#9B9B9B]">{c.subject}</p>
-                </div>
-                <span
-                  className={cn(
-                    "text-[11px] font-bold px-2.5 py-0.5 rounded-full border",
-                    c.cls,
-                  )}
-                >
-                  {c.status}
-                </span>
+            {(stats?.assigned_copies ?? 0) === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full gap-2 py-8">
+                <CheckCircle2 size={28} className="text-emerald-500" />
+                <p className="text-[13px] font-semibold text-[#1A1A1A]">No copies pending</p>
+                <p className="text-[12px] text-[#9B9B9B]">All assigned copies have been graded.</p>
               </div>
-            ))}
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full gap-3 py-8">
+                <FileText size={28} className="text-blue-400" />
+                <p className="text-[15px] font-bold text-[#1A1A1A]">
+                  {(stats?.assigned_copies ?? 0) - (stats?.completed_corrections ?? 0)} copies remaining
+                </p>
+                <p className="text-[12px] text-[#9B9B9B] text-center">
+                  Open the Correction page to view and grade your assigned anonymous copies.
+                </p>
+              </div>
+            )}
           </div>
         </Card>
       </div>
@@ -655,12 +598,12 @@ const SupervisorDashboard = ({ name, stats }: { name: string; stats: DashboardSt
           </h3>
           <div className="space-y-3 flex-1 overflow-y-auto">
             {[
-              ["Subject", "Mathematics & Logic"],
-              ["Date", "2026-03-10"],
-              ["Start Time", "09:00"],
-              ["Duration", "3 hours"],
-              ["Room", "A101 — Block A, Capacity 53"],
-              ["Status", "Scheduled"],
+              ["Session", stats?.active_session?.name ?? "—"],
+              ["Date", stats?.active_session?.date ?? "—"],
+              ["Start Time", "—"],
+              ["Duration", "—"],
+              ["Room", "—"],
+              ["Status", stats?.active_session?.status ?? "—"],
             ].map(([label, val]) => (
               <div
                 key={label}
@@ -797,13 +740,13 @@ const JuryMemberDashboard = ({ name, stats }: { name: string; stats: DashboardSt
       {[
         {
           label: "Session",
-          value: "2026",
+          value: stats?.active_session?.name ?? "—",
           icon: Gavel,
           iconBg: "bg-purple-50 text-purple-500",
         },
         {
           label: "Candidates Ranked",
-          value: "1,190",
+          value: stats?.candidates_to_deliberate?.toLocaleString() ?? "—",
           icon: TrendingUp,
           iconBg: "bg-blue-50 text-blue-500",
         },
@@ -877,27 +820,29 @@ const AnonymityDashboard = ({ name, stats }: { name: string; stats: DashboardSta
       {[
         {
           label: "Total Copies",
-          value: "1,190",
+          value: stats?.total_candidates?.toLocaleString() ?? "—",
           icon: FileText,
           iconBg: "bg-blue-50 text-blue-500",
         },
         {
-          label: "Coded",
-          value: "1,148",
+          label: "Present",
+          value: stats?.total_present?.toLocaleString() ?? "—",
           icon: Eye,
           iconBg: "bg-emerald-50 text-emerald-600",
-          trend: "96%",
-          trendUp: true,
+          trend: stats?.total_candidates
+            ? `${Math.round(((stats.total_present ?? 0) / stats.total_candidates) * 100)}%`
+            : undefined,
+          trendUp: true as boolean | null,
         },
         {
-          label: "Missing Scans",
-          value: "38",
+          label: "Pending Corrections",
+          value: stats?.pending_corrections?.toLocaleString() ?? "—",
           icon: AlertTriangle,
           iconBg: "bg-amber-50 text-amber-600",
         },
         {
-          label: "Errors",
-          value: "4",
+          label: "Active Discrepancies",
+          value: stats?.active_discrepancies?.toLocaleString() ?? "—",
           icon: Shield,
           iconBg: "bg-red-50 text-red-500",
         },
@@ -920,8 +865,10 @@ const AnonymityDashboard = ({ name, stats }: { name: string; stats: DashboardSta
           </h3>
           <div className="mb-4 shrink-0">
             <div className="flex justify-between text-[12px] text-[#9B9B9B] mb-1.5">
-              <span>1,148 of 1,190 copies coded</span>
-              <span className="font-bold text-[#8B7355]">96%</span>
+              <span>{(stats?.total_present ?? 0).toLocaleString()} of {(stats?.total_candidates ?? 0).toLocaleString()} candidates present</span>
+              <span className="font-bold text-[#8B7355]">
+                {stats?.total_candidates ? `${Math.round(((stats.total_present ?? 0) / stats.total_candidates) * 100)}%` : "—"}
+              </span>
             </div>
             <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
               <div

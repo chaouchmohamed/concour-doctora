@@ -41,73 +41,7 @@ interface Discrepancy {
   finalGrade?: number;
 }
 
-// ─── Mock data ────────────────────────────────────────────────────────────────
 
-const initialData: Discrepancy[] = [
-  {
-    id: "1",
-    copyCode: "ANO-7F3A92",
-    subject: "Mathematics",
-    c1Grade: 16.5,
-    c2Grade: 12.0,
-    delta: 4.5,
-    status: "PENDING",
-    severity: "HIGH",
-  },
-  {
-    id: "2",
-    copyCode: "ANO-B1E4D8",
-    subject: "Mathematics",
-    c1Grade: 14.25,
-    c2Grade: 11.0,
-    delta: 3.25,
-    status: "ASSIGNED",
-    severity: "MEDIUM",
-    thirdCorrector: "Dr. Ahmed",
-  },
-  {
-    id: "3",
-    copyCode: "ANO-9C2F15",
-    subject: "English",
-    c1Grade: 15.0,
-    c2Grade: 8.5,
-    delta: 6.5,
-    status: "PENDING",
-    severity: "CRITICAL",
-  },
-  {
-    id: "4",
-    copyCode: "ANO-4D8E71",
-    subject: "Computer Science",
-    c1Grade: 17.0,
-    c2Grade: 13.75,
-    delta: 3.25,
-    status: "RESOLVED",
-    severity: "MEDIUM",
-    finalGrade: 15.5,
-  },
-  {
-    id: "5",
-    copyCode: "ANO-F6A023",
-    subject: "Mathematics",
-    c1Grade: 12.0,
-    c2Grade: 8.75,
-    delta: 3.25,
-    status: "RESOLVED",
-    severity: "MEDIUM",
-    finalGrade: 10.25,
-  },
-  {
-    id: "6",
-    copyCode: "ANO-2B9D44",
-    subject: "English",
-    c1Grade: 18.0,
-    c2Grade: 13.0,
-    delta: 5.0,
-    status: "PENDING",
-    severity: "HIGH",
-  },
-];
 
 // ─── Pills — plain spans, no Badge component ──────────────────────────────────
 

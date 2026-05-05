@@ -36,7 +36,6 @@ interface HistoryAction {
 
 const STORAGE_KEY = 'supervisor_attendance';
 const TIMER_KEY   = 'supervisor_session_start';
-const SESSION_INFO = { room: 'Room A102', subject: 'Mathematics & Logic', year: '2026' };
 
 const INCIDENT_OPTIONS: { type: IncidentType; label: string; color: string }[] = [
   { type: 'CHEATING',     label: 'Cheating Attempt',    color: 'text-red-600' },
@@ -46,23 +45,15 @@ const INCIDENT_OPTIONS: { type: IncidentType; label: string; color: string }[] =
   { type: 'OTHER',        label: 'Other Incident',      color: 'text-gray-600' },
 ];
 
-const DEFAULT_STUDENTS: Student[] = [
-  { id: '1', seat: '01', appNum: 'DOCT-001', name: 'Amine Benali',    status: 'PENDING' },
-  { id: '2', seat: '02', appNum: 'DOCT-002', name: 'Sarah Mansouri',  status: 'PENDING' },
-  { id: '3', seat: '03', appNum: 'DOCT-003', name: 'Karim Zidi',      status: 'PENDING' },
-  { id: '4', seat: '04', appNum: 'DOCT-004', name: 'Lina Khelifi',    status: 'PENDING' },
-  { id: '5', seat: '05', appNum: 'DOCT-005', name: 'Yacine Brahimi',  status: 'PENDING' },
-  { id: '6', seat: '06', appNum: 'DOCT-006', name: 'Mounir Haddad',   status: 'PENDING' },
-  { id: '7', seat: '07', appNum: 'DOCT-007', name: 'Fatiha Belkacem', status: 'PENDING' },
-];
+
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function loadStudents(): Student[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : DEFAULT_STUDENTS;
-  } catch { return DEFAULT_STUDENTS; }
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
 }
 
 function saveStudents(students: Student[]) {
@@ -88,6 +79,7 @@ export const SupervisorPWA = () => {
 
   const [isOnline, setIsOnline]       = useState(navigator.onLine);
   const [students, setStudents]       = useState<Student[]>(loadStudents);
+  const [sessionInfo, setSessionInfo] = useState({ room: 'Exam Room', subject: '', year: '' });
   const [query, setQuery]             = useState('');
   const [history, setHistory]         = useState<HistoryAction[]>([]);
   const [elapsed, setElapsed]         = useState(0);
@@ -119,6 +111,31 @@ export const SupervisorPWA = () => {
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
+  }, []);
+
+  // ── Load session + candidates from API ─────────────────────────────────
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const sessRes = await api.sessions.list();
+        const active = sessRes.results.find(s => s.status === 'ACTIVE') ?? sessRes.results[0] ?? null;
+        if (active) {
+          setSessionInfo({ room: 'Exam Room', subject: active.name, year: String(active.year) });
+          if (!localStorage.getItem(STORAGE_KEY)) {
+            const candidates = await api.candidates.listAll(`exam_session=${active.id}`);
+            const mapped: Student[] = candidates.map((c, i) => ({
+              id: String(c.id),
+              seat: String(i + 1).padStart(2, '0'),
+              appNum: c.application_number,
+              name: c.full_name,
+              status: 'PENDING' as AttStatus,
+            }));
+            setStudents(mapped);
+          }
+        }
+      } catch (err) { console.error('Failed to load supervisor data:', err); }
+    };
+    init();
   }, []);
 
   // ── Persist on every change ───────────────────────────────────────────────
@@ -230,10 +247,9 @@ export const SupervisorPWA = () => {
       }));
 
       if (isOnline) {
-        // ✅ Fixed: was missing Bearer token and using wrong endpoint (/attendance/ vs /attendance/bulk/)
-        await api.attendance.bulk(SESSION_INFO, payload);
+        await api.attendance.bulk(sessionInfo, payload);
       } else {
-        localStorage.setItem('supervisor_pending_submit', JSON.stringify({ session: SESSION_INFO, records: payload, timestamp: Date.now() }));
+        localStorage.setItem('supervisor_pending_submit', JSON.stringify({ session: sessionInfo, records: payload, timestamp: Date.now() }));
         setPendingSync(true);
       }
 
@@ -253,9 +269,9 @@ export const SupervisorPWA = () => {
     const rows = students.map(s =>
       `<tr><td>${s.seat}</td><td>${s.appNum}</td><td>${s.name}</td><td>${s.status}</td><td>${s.flagged ? (s.incident || 'FLAGGED') : ''}</td></tr>`
     ).join('');
-    const html = `<html><head><title>Call List — ${SESSION_INFO.room}</title>
+    const html = `<html><head><title>Call List — ${sessionInfo.room}</title>
     <style>body{font-family:sans-serif;padding:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:8px;text-align:left}th{background:#f0ede7}h2{color:#8B7355}</style>
-    </head><body><h2>${SESSION_INFO.room} — ${SESSION_INFO.subject} — ${SESSION_INFO.year}</h2>
+    </head><body><h2>${sessionInfo.room} — ${sessionInfo.subject} — ${sessionInfo.year}</h2>
     <p>Printed: ${new Date().toLocaleString()} | Present: ${students.filter(s=>s.status==='PRESENT').length}/${students.length}</p>
     <table><thead><tr><th>Seat</th><th>App #</th><th>Name</th><th>Status</th><th>Incident</th></tr></thead><tbody>${rows}</tbody></table>
     </body></html>`;
@@ -309,8 +325,8 @@ export const SupervisorPWA = () => {
               <ChevronLeft size={24} />
             </button>
             <div>
-              <h1 className="text-lg font-bold leading-tight">{SESSION_INFO.room}</h1>
-              <p className="text-[12px] text-muted">{SESSION_INFO.subject} • Session {SESSION_INFO.year}</p>
+              <h1 className="text-lg font-bold leading-tight">{sessionInfo.room || 'Exam Room'}</h1>
+              <p className="text-[12px] text-muted">{sessionInfo.subject || 'Loading…'} • Session {sessionInfo.year}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">

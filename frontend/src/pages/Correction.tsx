@@ -21,7 +21,7 @@ import { AppShell } from "../components/AppShell";
 import { Card } from "../components/UI";
 import { cn } from "../constants";
 import { motion, AnimatePresence } from "motion/react";
-import { api, Copy as ApiCopy, Correction as ApiCorrection, Discrepancy as ApiDiscrepancy } from "../lib/api";
+import { api, AppUser as ApiUser, Copy as ApiCopy, Correction as ApiCorrection, Discrepancy as ApiDiscrepancy } from "../lib/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -44,74 +44,10 @@ interface Copy {
   correctionOrder: "FIRST" | "SECOND" | "THIRD";
   thirdCorrector?: string;
   discrepancyThreshold?: number;
+  discrepancyId?: number;
 }
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
 
-const mockCopies: Copy[] = [
-  {
-    id: "1",
-    code: "DOCT-2026-042",
-    subject: "Mathematics & Logic",
-    grade1: null,
-    grade2: null,
-    finalGrade: null,
-    status: "PENDING",
-    pages: 4,
-    correctionOrder: "FIRST",
-  },
-  {
-    id: "2",
-    code: "DOCT-2026-051",
-    subject: "Mathematics & Logic",
-    grade1: 14.5,
-    grade2: null,
-    finalGrade: null,
-    status: "GRADED_1",
-    pages: 4,
-    correctionOrder: "FIRST",
-  },
-  {
-    id: "3",
-    code: "DOCT-2026-063",
-    subject: "Research Methodology",
-    grade1: 12.0,
-    grade2: 15.5,
-    finalGrade: null,
-    status: "DISCREPANCY",
-    pages: 3,
-    correctionOrder: "FIRST",
-  },
-  {
-    id: "4",
-    code: "DOCT-2026-077",
-    subject: "Mathematics & Logic",
-    grade1: 16.0,
-    grade2: 17.0,
-    finalGrade: 16.5,
-    status: "LOCKED",
-    pages: 4,
-    correctionOrder: "FIRST",
-  },
-  {
-    id: "5",
-    code: "DOCT-2026-088",
-    subject: "Specialty: Computer Sci.",
-    grade1: 9.5,
-    grade2: 10.0,
-    finalGrade: 9.75,
-    status: "LOCKED",
-    pages: 4,
-    correctionOrder: "FIRST",
-  },
-];
-
-const seniorCorrectors = [
-  "Prof. Malki Mimoun",
-  "Dr. Malki Abdelhamid",
-  "Prof. Kechar Mohamed",
-  "Dr. Belfaci Younes",
-];
 
 // ─── Status pill ──────────────────────────────────────────────────────────────
 
@@ -147,9 +83,10 @@ const ThirdCorrectorModal = ({
 }: {
   copy: Copy;
   onClose: () => void;
-  onConfirm: (copyId: string, corrector: string) => void;
+  onConfirm: (copyId: string, correctorName: string, correctorId?: number) => void;
 }) => {
   const [selected, setSelected] = useState("");
+  const [correctors, setCorrectors] = useState<Array<{ id: number; name: string }>>([]);
   const [priority, setPriority] = useState<"Normal" | "High" | "Urgent">(
     "Normal",
   );
@@ -157,10 +94,18 @@ const ThirdCorrectorModal = ({
   const [confirming, setConfirming] = useState(false);
   const [done, setDone] = useState(false);
 
+  useEffect(() => {
+    api.users.list('role=CORRECTOR')
+      .then(res => setCorrectors(res.results.map((u: ApiUser) => ({ id: u.id, name: u.full_name || u.username }))))
+      .catch(console.error);
+  }, []);
+
   const diff =
     copy.grade1 !== null && copy.grade2 !== null
       ? Math.abs(copy.grade1 - copy.grade2).toFixed(2)
       : "—";
+
+  const selectedCorrector = correctors.find(c => String(c.id) === selected);
 
   const handleConfirm = () => {
     if (!selected) return;
@@ -169,7 +114,7 @@ const ThirdCorrectorModal = ({
       setConfirming(false);
       setDone(true);
       setTimeout(() => {
-        onConfirm(copy.id, selected);
+        onConfirm(copy.id, selectedCorrector?.name ?? selected, selectedCorrector?.id);
         onClose();
       }, 1000);
     }, 1200);
@@ -208,11 +153,11 @@ const ThirdCorrectorModal = ({
           <div className="py-10 text-center space-y-2">
             <CheckCircle2 size={36} className="mx-auto text-emerald-500" />
             <p className="font-semibold text-gray-800 text-sm">
-              Assignment Confirmed
-            </p>
-            <p className="text-xs text-gray-400">
-              {selected} has been notified
-            </p>
+            Assignment Confirmed
+          </p>
+          <p className="text-xs text-gray-400">
+            {selectedCorrector?.name ?? selected} has been notified
+          </p>
           </div>
         ) : (
           <div className="px-5 py-4 space-y-3.5">
@@ -259,11 +204,14 @@ const ThirdCorrectorModal = ({
                   className="w-full appearance-none border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white pr-8 focus:outline-none focus:ring-2 focus:ring-[#8B7355]/25 focus:border-[#8B7355] transition-colors"
                 >
                   <option value="">Choose a Senior Corrector...</option>
-                  {seniorCorrectors.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
+                  {correctors.length === 0
+                    ? <option value="" disabled>Loading correctors…</option>
+                    : correctors.map((c) => (
+                        <option key={c.id} value={String(c.id)}>
+                          {c.name}
+                        </option>
+                      ))
+                  }
                 </select>
                 <ChevronDown
                   size={14}
@@ -489,6 +437,7 @@ export const CorrectionPage = () => {
             pages: item.page_count,
             correctionOrder,
             thirdCorrector: discrepancy?.third_corrector_name ?? undefined,
+            discrepancyId: discrepancy?.id,
           } satisfies Copy;
         });
 
@@ -570,10 +519,14 @@ export const CorrectionPage = () => {
       .catch(console.error);
   };
 
-  const handleThirdConfirm = (copyId: string, corrector: string) => {
+  const handleThirdConfirm = (copyId: string, correctorName: string, correctorId?: number) => {
+    const targetCopy = copies.find(c => c.id === copyId);
+    if (targetCopy?.discrepancyId && correctorId) {
+      api.discrepancies.assignThird(targetCopy.discrepancyId, correctorId).catch(console.error);
+    }
     setCopies((prev) =>
       prev.map((c) =>
-        c.id === copyId ? { ...c, thirdCorrector: corrector } : c,
+        c.id === copyId ? { ...c, thirdCorrector: correctorName } : c,
       ),
     );
   };
