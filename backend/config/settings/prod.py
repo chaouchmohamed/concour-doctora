@@ -1,5 +1,14 @@
 from .base import *
 
+import os
+import dj_database_url
+from .base import *  # importe les settings de base
+
+DATABASES = {
+    'default': dj_database_url.config(
+        default=os.environ.get('MYSQL_URL')
+    )
+}
 DEBUG = False
 
 SECURE_SSL_REDIRECT = True

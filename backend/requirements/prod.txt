@@ -1,1 +1,5 @@
 -r base.txt
+gunicorn
+whitenoise
+mysqlclient
+dj-database-url
