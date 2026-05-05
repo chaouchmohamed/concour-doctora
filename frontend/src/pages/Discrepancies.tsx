@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   AlertTriangle,
   UserPlus,
@@ -20,6 +20,7 @@ import { AppShell } from "../components/AppShell";
 import { Card } from "../components/UI";
 import { cn } from "../constants";
 import { motion, AnimatePresence } from "motion/react";
+import { api, AppUser as ApiUser, Discrepancy as ApiDisc } from "../lib/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -108,13 +109,6 @@ const initialData: Discrepancy[] = [
   },
 ];
 
-const seniorCorrectors = [
-  "Prof. Malki Mimoun",
-  "Dr. Malki Abdelhamid",
-  "Prof. Kechar Mohamed",
-  "Dr. Belfaci Younes",
-];
-
 // ─── Pills — plain spans, no Badge component ──────────────────────────────────
 
 const severityPill: Record<Severity, string> = {
@@ -138,12 +132,14 @@ const statusPill: Record<DiscStatus, string> = {
 
 const AssignModal = ({
   disc,
+  correctors,
   onClose,
   onConfirm,
 }: {
   disc: Discrepancy;
+  correctors: { id: number; name: string }[];
   onClose: () => void;
-  onConfirm: (id: string, corrector: string) => void;
+  onConfirm: (id: string, correctorId: number) => Promise<void> | void;
 }) => {
   const [selected, setSelected] = useState("");
   const [priority, setPriority] = useState<"Normal" | "High" | "Urgent">(
@@ -156,14 +152,13 @@ const AssignModal = ({
   const handleConfirm = () => {
     if (!selected) return;
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      setDone(true);
-      setTimeout(() => {
-        onConfirm(disc.id, selected);
-        onClose();
-      }, 900);
-    }, 1100);
+    Promise.resolve(onConfirm(disc.id, Number(selected)))
+      .then(() => {
+        setLoading(false);
+        setDone(true);
+        setTimeout(onClose, 900);
+      })
+      .catch(() => setLoading(false));
   };
 
   return (
@@ -200,7 +195,7 @@ const AssignModal = ({
               Assignment Confirmed
             </p>
             <p className="text-xs text-gray-400">
-              {selected} has been notified
+              {correctors.find((corrector) => String(corrector.id) === selected)?.name ?? "Corrector"} has been notified
             </p>
           </div>
         ) : (
@@ -246,9 +241,9 @@ const AssignModal = ({
                   className="w-full appearance-none border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-white pr-8 focus:outline-none focus:ring-2 focus:ring-[#8B7355]/25 focus:border-[#8B7355]"
                 >
                   <option value="">Choose a Senior Corrector...</option>
-                  {seniorCorrectors.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
+                  {correctors.map((corrector) => (
+                    <option key={corrector.id} value={corrector.id}>
+                      {corrector.name}
                     </option>
                   ))}
                 </select>
@@ -571,7 +566,23 @@ const DetailDrawer = ({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export const DiscrepanciesPage = () => {
-  const [data, setData] = useState<Discrepancy[]>(initialData);
+  // Map API discrepancy to local type
+  const mapDisc = (d: ApiDisc): Discrepancy => ({
+    id: String(d.id),
+    copyCode: d.copy_anonymous_code,
+    subject: d.subject_name,
+    c1Grade: parseFloat(d.grade1),
+    c2Grade: parseFloat(d.grade2),
+    delta: parseFloat(d.difference),
+    status: d.resolved ? "RESOLVED" : d.third_corrector ? "ASSIGNED" : "PENDING",
+    severity: parseFloat(d.difference) >= 5 ? "CRITICAL" : parseFloat(d.difference) >= 4 ? "HIGH" : "MEDIUM",
+    thirdCorrector: d.third_corrector_name ?? undefined,
+    finalGrade: d.final_grade ? parseFloat(d.final_grade) : undefined,
+  });
+
+  const [data, setData] = useState<Discrepancy[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [correctors, setCorrectors] = useState<{ id: number; name: string }[]>([]);
   const [filter, setFilter] = useState<DiscStatus | "ALL">("ALL");
   const [search, setSearch] = useState("");
   const [assignTarget, setAssignTarget] = useState<Discrepancy | null>(null);
@@ -580,6 +591,32 @@ export const DiscrepanciesPage = () => {
   const [finalRule, setFinalRule] = useState<FinalRule>("AVERAGE");
   const [savedConfig, setSavedConfig] = useState(false);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      api.discrepancies.list(),
+      api.users.list("profile__role=CORRECTOR"),
+    ])
+      .then(([discRes, userRes]) => {
+        setData(discRes.results.map(mapDisc));
+        setCorrectors(
+          userRes.results.map((user: ApiUser) => ({
+            id: user.id,
+            name:
+              user.full_name ||
+              `${user.first_name} ${user.last_name}`.trim() ||
+              user.username,
+          })),
+        );
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const refresh = () => {
+    api.discrepancies.list().then(res => setData(res.results.map(mapDisc))).catch(console.error);
+  };
 
   const stats = {
     total: data.length,
@@ -600,27 +637,17 @@ export const DiscrepanciesPage = () => {
       sortDir === "desc" ? b.delta - a.delta : a.delta - b.delta,
     );
 
-  const handleAssignConfirm = (id: string, corrector: string) =>
-    setData((prev) =>
-      prev.map((d) =>
-        d.id === id
-          ? {
-              ...d,
-              status: "ASSIGNED" as DiscStatus,
-              thirdCorrector: corrector,
-            }
-          : d,
-      ),
-    );
+  const handleAssignConfirm = async (id: string, correctorId: number) => {
+    await api.discrepancies.assignThird(Number(id), correctorId);
+    refresh();
+  };
 
-  const handleValidate = (id: string, grade: number) =>
-    setData((prev) =>
-      prev.map((d) =>
-        d.id === id
-          ? { ...d, status: "RESOLVED" as DiscStatus, finalGrade: grade }
-          : d,
-      ),
-    );
+  const handleValidate = async (id: string, grade: number) => {
+    try {
+      await api.discrepancies.resolve(Number(id), grade);
+    } catch (e) { console.error(e); }
+    refresh();
+  };
 
   const handleSaveConfig = () => {
     setSavedConfig(true);
@@ -636,6 +663,7 @@ export const DiscrepanciesPage = () => {
         {assignTarget && (
           <AssignModal
             disc={assignTarget}
+            correctors={correctors}
             onClose={() => setAssignTarget(null)}
             onConfirm={handleAssignConfirm}
           />

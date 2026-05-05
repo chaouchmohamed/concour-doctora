@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -21,6 +21,7 @@ import { AppShell } from "../components/AppShell";
 import { Card } from "../components/UI";
 import { cn } from "../constants";
 import { motion, AnimatePresence } from "motion/react";
+import { api, Copy as ApiCopy, Correction as ApiCorrection, Discrepancy as ApiDiscrepancy } from "../lib/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -42,6 +43,7 @@ interface Copy {
   pages: number;
   correctionOrder: "FIRST" | "SECOND" | "THIRD";
   thirdCorrector?: string;
+  discrepancyThreshold?: number;
 }
 
 // ─── Mock Data ────────────────────────────────────────────────────────────────
@@ -421,16 +423,110 @@ const CopyListSidebar = ({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export const CorrectionPage = () => {
-  const [copies, setCopies] = useState<Copy[]>(mockCopies);
-  const [activeId, setActiveId] = useState(mockCopies[0].id);
+  const [copies, setCopies] = useState<Copy[]>([]);
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [grade, setGrade] = useState("");
   const [comment, setComment] = useState("");
   const [savedMsg, setSavedMsg] = useState(false);
   const [showThirdModal, setShowThirdModal] = useState(false);
   const [zoom, setZoom] = useState(100);
+  const [loading, setLoading] = useState(true);
 
-  const copy = copies.find((c) => c.id === activeId)!;
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      try {
+        const [copyRes, correctionRes, discrepancyRes] = await Promise.all([
+          api.corrections.assigned(),
+          api.corrections.list().catch(() => ({ results: [] } as { results: ApiCorrection[] })),
+          api.discrepancies.list().catch(() => ({ results: [] } as { results: ApiDiscrepancy[] })),
+        ]);
+
+        const correctionsByCopy = new Map<number, ApiCorrection[]>();
+        correctionRes.results.forEach((entry) => {
+          const bucket = correctionsByCopy.get(entry.copy) ?? [];
+          bucket.push(entry);
+          correctionsByCopy.set(entry.copy, bucket);
+        });
+        const discrepancyByCopy = new Map<number, ApiDiscrepancy>(
+          discrepancyRes.results.map((entry) => [entry.copy, entry]),
+        );
+
+        const mappedCopies = copyRes.map((item: ApiCopy) => {
+          const corrections = correctionsByCopy.get(item.id) ?? [];
+          const discrepancy = discrepancyByCopy.get(item.id);
+          const correctionOrder: Copy["correctionOrder"] =
+            item.corrections_count >= 2
+              ? "THIRD"
+              : item.corrections_count === 1
+                ? "SECOND"
+                : "FIRST";
+          return {
+            id: String(item.id),
+            code: item.anonymous_code_value,
+            subject: item.subject_name,
+            grade1: corrections.find((entry) => entry.attempt === 1)?.grade
+              ? Number(corrections.find((entry) => entry.attempt === 1)?.grade)
+              : discrepancy?.grade1
+                ? Number(discrepancy.grade1)
+                : null,
+            grade2: corrections.find((entry) => entry.attempt === 2)?.grade
+              ? Number(corrections.find((entry) => entry.attempt === 2)?.grade)
+              : discrepancy?.grade2
+                ? Number(discrepancy.grade2)
+                : null,
+            finalGrade: discrepancy?.final_grade ? Number(discrepancy.final_grade) : null,
+            status: discrepancy?.resolved
+              ? "LOCKED"
+              : discrepancy
+                ? "DISCREPANCY"
+                : item.corrections_count === 0
+                  ? "PENDING"
+                  : item.corrections_count === 1
+                    ? "GRADED_1"
+                    : "GRADED_BOTH",
+            pages: item.page_count,
+            correctionOrder,
+            thirdCorrector: discrepancy?.third_corrector_name ?? undefined,
+          } satisfies Copy;
+        });
+
+        setCopies(mappedCopies);
+        setActiveId((current) => current ?? mappedCopies[0]?.id ?? null);
+      } catch (error) {
+        console.error(error);
+        setCopies([]);
+        setActiveId(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void load();
+  }, []);
+
+  const copy = activeId ? copies.find((c) => c.id === activeId) ?? null : null;
+  if (loading) {
+    return (
+      <AppShell title="Double-Blind Correction">
+        <div className="h-full flex items-center justify-center text-sm text-muted">
+          Loading assigned copies...
+        </div>
+      </AppShell>
+    );
+  }
+
+  if (!copy) {
+    return (
+      <AppShell title="Double-Blind Correction">
+        <div className="h-full flex items-center justify-center text-sm text-muted">
+          No copies are currently assigned for correction.
+        </div>
+      </AppShell>
+    );
+  }
+
   const isLocked = copy.status === "LOCKED";
   const hasDiscrepancy = copy.status === "DISCREPANCY";
   const myGrade = copy.correctionOrder === "FIRST" ? copy.grade1 : copy.grade2;
@@ -447,32 +543,31 @@ export const CorrectionPage = () => {
   const handleSave = () => {
     const g = parseFloat(grade);
     if (isNaN(g) || g < 0 || g > 20) return;
-    setCopies((prev) =>
-      prev.map((c) => {
-        if (c.id !== activeId) return c;
-        const updated = { ...c };
-        if (c.correctionOrder === "FIRST") {
-          updated.grade1 = g;
-          updated.status =
-            c.grade2 !== null
-              ? Math.abs(g - c.grade2) > 3
-                ? "DISCREPANCY"
-                : "GRADED_BOTH"
-              : "GRADED_1";
-        } else {
-          updated.grade2 = g;
-          updated.status =
-            c.grade1 !== null
-              ? Math.abs(g - c.grade1) > 3
-                ? "DISCREPANCY"
-                : "GRADED_BOTH"
-              : "GRADED_1";
-        }
-        return updated;
-      }),
-    );
-    setSavedMsg(true);
-    setTimeout(() => setSavedMsg(false), 3000);
+    const nextCopyId = copies.find((item) => item.id !== copy.id)?.id ?? null;
+    void api.corrections
+      .submit({
+        copy: Number(copy.id),
+        grade: g,
+        comment,
+        attempt:
+          copy.correctionOrder === "FIRST"
+            ? 1
+            : copy.correctionOrder === "SECOND"
+              ? 2
+              : 3,
+      })
+      .then(() => {
+        setSavedMsg(true);
+        setGrade("");
+        setComment("");
+        setTimeout(() => setSavedMsg(false), 3000);
+        setCopies((prev) => prev.filter((item) => item.id !== copy.id));
+        setActiveId((current) => {
+          if (current !== copy.id) return current;
+          return nextCopyId;
+        });
+      })
+      .catch(console.error);
   };
 
   const handleThirdConfirm = (copyId: string, corrector: string) => {

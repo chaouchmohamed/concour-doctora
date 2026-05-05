@@ -23,12 +23,15 @@ import {
   BookOpen,
   Check,
   Plus,
+  Loader2,
 } from "lucide-react";
 import { ROUTES, APP_NAME, cn } from "../constants";
 import { motion, AnimatePresence } from "motion/react";
 import { useAuth } from "../context/AuthContext";
+import { useSession } from "../context/SessionContext";
 import { UserRole } from "../types";
 import dashboardLogo from "../assets/logo.png";
+import { api } from "../lib/api";
 
 type NavItem = {
   icon: React.ElementType;
@@ -131,8 +134,11 @@ function getInitials(fullName: string, username: string): string {
 }
 
 const SessionDropdown = () => {
+  const { selectedSession, setSelectedSession } = useSession();
   const [isOpen, setIsOpen] = useState(false);
-  const [selected, setSelected] = useState({ subject: "Mathematics", year: "2025" });
+  const [sessions, setSessions] = useState<{ id: number; name: string; year: number; status: string }[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -145,11 +151,61 @@ const SessionDropdown = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const options = [
-    { subject: "Mathematics", year: "2025", color: "bg-blue-50 text-blue-600" },
-    { subject: "Computer Science", year: "2023", color: "bg-purple-50 text-purple-600" },
-    { subject: "Physics", year: "2024", color: "bg-emerald-50 text-emerald-600" },
-  ];
+  useEffect(() => {
+    // Only fetch when dropdown opens and we haven't already loaded sessions
+    if (!isOpen) {
+      return;
+    }
+
+    // Skip if already loading or have sessions
+    if (sessions.length > 0 || loading) {
+      return;
+    }
+
+    let active = true;
+    setLoading(true);
+    setLoadError(null);
+
+    api.sessions
+      .list()
+      .then((response) => {
+        if (!active) return;
+        console.log("Sessions response:", response);
+        
+        // Handle paginated response
+        const sessionList = Array.isArray(response) ? response : (response.results || []);
+        
+        const nextSessions = sessionList.map((session: any) => ({
+          id: session.id,
+          name: session.name,
+          year: session.year,
+          status: session.status,
+        }));
+        
+        console.log("Mapped sessions:", nextSessions);
+        setSessions(nextSessions);
+        
+        // Set first session as default if none selected
+        if (nextSessions.length > 0 && !selectedSession) {
+          setSelectedSession(nextSessions[0]);
+        }
+      })
+      .catch((error) => {
+        if (!active) return;
+        console.error("Error loading sessions:", error);
+        setLoadError(error instanceof Error ? error.message : "Unable to load sessions.");
+      })
+      .finally(() => {
+        if (!active) return;
+        setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [isOpen, selectedSession, setSelectedSession]);
+
+  const activeSession = selectedSession ?? sessions[0] ?? null;
 
   return (
     <div className="relative hidden sm:block z-50" ref={dropdownRef}>
@@ -162,8 +218,12 @@ const SessionDropdown = () => {
             <BookOpen size={13} strokeWidth={2.5} />
           </div>
           <div className="flex flex-col items-start -space-y-0.5">
-            <span className="text-[12px] font-extrabold text-[#1A1A1A] leading-tight">{selected.subject}</span>
-            <span className="text-[10px] font-bold text-[#8B7355] leading-tight">Session {selected.year}</span>
+            <span className="text-[12px] font-extrabold text-[#1A1A1A] leading-tight">
+              {activeSession ? activeSession.name : "Loading sessions..."}
+            </span>
+            <span className="text-[10px] font-bold text-[#8B7355] leading-tight">
+              {activeSession ? `Session ${activeSession.year} · ${activeSession.status}` : "No session"}
+            </span>
           </div>
         </div>
         <ChevronDown size={14} className={cn("text-[#9B9B9B] transition-transform duration-200", isOpen && "rotate-180")} />
@@ -176,41 +236,70 @@ const SessionDropdown = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.96 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            className="absolute top-full right-0 mt-2 w-[240px] bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-border overflow-hidden p-1.5 origin-top-right flex flex-col gap-0.5"
+              className="absolute top-full right-0 mt-2 w-[320px] bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-border overflow-hidden origin-top-right"
           >
-            <div className="px-2.5 py-2 mb-1">
-              <p className="text-[10px] font-bold text-[#9B9B9B] uppercase tracking-widest pl-1">Switch Session</p>
-            </div>
-            {options.map((opt) => {
-              const isSelected = selected.subject === opt.subject && selected.year === opt.year;
-              return (
-                <button
-                  key={`${opt.subject}-${opt.year}`}
-                  onClick={() => { setSelected(opt); setIsOpen(false); }}
-                  className={cn(
-                    "w-full text-left flex items-center justify-between px-2.5 py-2 rounded-lg transition-all border border-transparent",
-                    isSelected ? "bg-[#8B7355]/5 border-[#8B7355]/10" : "hover:bg-[#FAFAFA] hover:border-border/50"
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={cn("w-7 h-7 rounded-md flex items-center justify-center shrink-0", opt.color)}>
-                      <BookOpen size={14} />
-                    </div>
-                    <div className="flex flex-col -space-y-0.5">
-                      <p className={cn("text-[13px] font-bold", isSelected ? "text-[#8B7355]" : "text-[#1A1A1A]")}>
-                        {opt.subject}
-                      </p>
-                      <p className="text-[11px] text-[#9B9B9B] font-medium leading-tight mt-0.5">{opt.year}</p>
-                    </div>
+              <div className="max-h-[400px] overflow-y-auto flex flex-col gap-0.5 p-1.5">
+                {loading && (
+                  <div className="flex items-center gap-2 px-3 py-3 text-[12px] text-[#6B6B6B]">
+                    <Loader2 size={14} className="animate-spin text-[#8B7355]" />
+                    Loading sessions...
                   </div>
-                  {isSelected && (
-                    <div className="w-5 h-5 rounded-full bg-[#8B7355] flex items-center justify-center shadow-sm">
-                      <Check size={12} strokeWidth={3} className="text-white" />
+                )}
+
+                {loadError && (
+                  <div className="px-3 py-2 text-[12px] text-red-700 bg-red-50 rounded-lg mx-0.5">
+                    {loadError}
+                  </div>
+                )}
+
+                {!loading && !loadError && sessions.length === 0 && (
+                  <div className="px-3 py-3 text-[12px] text-[#6B6B6B]">
+                    No sessions available.
+                  </div>
+                )}
+
+                {!loading && !loadError && sessions.map((session) => {
+                  const isSelected = activeSession?.id === session.id;
+                  const color =
+                    session.status === "ACTIVE"
+                      ? "bg-emerald-50 text-emerald-600"
+                      : session.status === "CLOSED"
+                        ? "bg-slate-100 text-slate-600"
+                        : "bg-blue-50 text-blue-600";
+                return (
+                  <button
+                      key={session.id}
+                      onClick={() => {
+                        setSelectedSession(session);
+                        setIsOpen(false);
+                      }}
+                    className={cn(
+                      "w-full text-left flex items-center justify-between px-2.5 py-2 rounded-lg transition-all border border-transparent",
+                      isSelected ? "bg-[#8B7355]/5 border-[#8B7355]/10" : "hover:bg-[#FAFAFA] hover:border-border/50"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                        <div className={cn("w-7 h-7 rounded-md flex items-center justify-center shrink-0", color)}>
+                          <BookOpen size={14} />
+                      </div>
+                      <div className="flex flex-col -space-y-0.5">
+                        <p className={cn("text-[13px] font-bold", isSelected ? "text-[#8B7355]" : "text-[#1A1A1A]")}>
+                            {session.name}
+                        </p>
+                          <p className="text-[11px] text-[#9B9B9B] font-medium leading-tight mt-0.5">
+                            {session.year} · {session.status}
+                          </p>
+                      </div>
                     </div>
-                  )}
-                </button>
-              );
-            })}
+                    {isSelected && (
+                      <div className="w-5 h-5 rounded-full bg-[#8B7355] flex items-center justify-center shadow-sm">
+                        <Check size={12} strokeWidth={3} className="text-white" />
+                      </div>
+                    )}
+                  </button>
+                );
+                })}
+              </div>
           </motion.div>
         )}
       </AnimatePresence>

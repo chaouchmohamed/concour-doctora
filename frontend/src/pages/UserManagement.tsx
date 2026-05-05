@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Users,
   UserPlus,
@@ -22,6 +22,7 @@ import { AppShell } from "../components/AppShell";
 import { Card } from "../components/UI";
 import { cn } from "../constants";
 import { motion, AnimatePresence } from "motion/react";
+import { api } from "../lib/api";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -547,7 +548,8 @@ const LoggedInBadge = () => (
 type LoginFilter = "ALL" | "FIRST_LOGIN" | "ACTIVATED";
 
 export const UserManagementPage = () => {
-  const [users, setUsers] = useState<AppUser[]>(initialUsers);
+  const [users, setUsers] = useState<AppUser[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<UserRole | "ALL">("ALL");
   const [loginFilter, setLoginFilter] = useState<LoginFilter>("ALL");
@@ -556,6 +558,23 @@ export const UserManagementPage = () => {
   const [showInvite, setShowInvite] = useState(false);
   const [editTarget, setEditTarget] = useState<AppUser | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AppUser | null>(null);
+
+  const mapUser = (u: import('../lib/api').AppUser): AppUser => ({
+    id: String(u.id),
+    name: u.full_name || `${u.first_name} ${u.last_name}`.trim() || u.username,
+    email: u.email,
+    role: (u.profile?.role ?? "CORRECTOR") as UserRole,
+    status: u.is_active ? (u.must_change_password ? "PENDING" : "ACTIVE") : "INACTIVE",
+    lastLogin: u.last_login ? new Date(u.last_login).toLocaleString() : "Never",
+    must_change_password: u.must_change_password ?? u.profile?.must_change_password ?? false,
+  });
+
+  const refresh = () => {
+    setLoading(true);
+    api.users.list().then(res => setUsers(res.results.map(mapUser))).catch(console.error).finally(() => setLoading(false));
+  };
+
+  useEffect(() => { refresh(); }, []);
 
   const filtered = users.filter((u) => {
     const matchSearch =
@@ -578,13 +597,30 @@ export const UserManagementPage = () => {
     firstLogin: users.filter((u) => u.must_change_password).length,
   };
 
-  const handleInvite = (u: AppUser) => setUsers((prev) => [...prev, u]);
-  const handleSave = (id: string, role: UserRole) =>
-    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, role } : u)));
-  const handleDelete = (id: string) =>
-    setUsers((prev) =>
-      prev.map((u) => (u.id === id ? { ...u, status: "INACTIVE" } : u)),
-    );
+  const handleInvite = async (u: AppUser) => {
+    try {
+      const [firstName, ...rest] = u.name.trim().split(/\s+/);
+      await api.users.invite({
+        email: u.email,
+        role: u.role,
+        first_name: firstName ?? "",
+        last_name: rest.join(" "),
+      });
+      refresh();
+    } catch (e) { console.error(e); setUsers(prev => [...prev, u]); }
+  };
+  const handleSave = async (id: string, role: UserRole) => {
+    try {
+      await api.users.changeRole(Number(id), role);
+      refresh();
+    } catch (e) { console.error(e); setUsers(prev => prev.map(u => u.id === id ? { ...u, role } : u)); }
+  };
+  const handleDelete = async (id: string) => {
+    try {
+      await api.users.update(Number(id), { is_active: false } as Parameters<typeof api.users.update>[1]);
+      refresh();
+    } catch (e) { console.error(e); setUsers(prev => prev.map(u => u.id === id ? { ...u, status: "INACTIVE" } : u)); }
+  };
 
   const loginFilterLabel: Record<LoginFilter, string> = {
     ALL: "All",

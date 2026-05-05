@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Trophy,
   Download,
@@ -18,6 +18,8 @@ import { AppShell } from "../components/AppShell";
 import { Card } from "../components/UI";
 import { cn } from "../constants";
 import { motion, AnimatePresence } from "motion/react";
+import { api, OfficialResult as ApiResult, ExamSession } from "../lib/api";
+import { authFetch } from "../context/AuthContext";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -141,19 +143,44 @@ const statusLabel: Record<ResultStatus, string> = {
 const PVModal = ({
   onClose,
   mode,
+  session,
+  results,
 }: {
   onClose: () => void;
   mode: "print" | "export";
+  session: ExamSession | null;
+  results: Result[];
 }) => {
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
 
-  const handleAction = () => {
+  const handleAction = async () => {
+    if (!session) return;
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const pv = await api.pv.generate(session.id, `PV of Deliberation - ${session.name}`);
+      const res = await authFetch(api.pv.downloadUrl(pv.id));
+      if (!res.ok) {
+        throw new Error(`Failed to download PV (${res.status})`);
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      setDownloadUrl(url);
+      if (mode === "print") {
+        window.open(url, "_blank", "noopener,noreferrer");
+      } else {
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `PV-${session.name}.pdf`;
+        a.click();
+      }
       setLoading(false);
       setDone(true);
-    }, 1600);
+    } catch (error) {
+      console.error(error);
+      setLoading(false);
+    }
   };
 
   return (
@@ -194,6 +221,13 @@ const PVModal = ({
               {mode === "export" && (
                 <button
                   type="button"
+                  onClick={() => {
+                    if (!downloadUrl) return;
+                    const a = document.createElement("a");
+                    a.href = downloadUrl;
+                    a.download = `PV-${session?.name ?? "results"}.pdf`;
+                    a.click();
+                  }}
                   className="flex items-center gap-2 mx-auto px-4 py-2 rounded-xl bg-primary-accent text-white text-xs font-bold hover:opacity-90 transition-opacity"
                 >
                   <Download size={13} /> Download PDF
@@ -204,18 +238,18 @@ const PVModal = ({
             <>
               <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-2 mb-4">
                 {[
-                  ["Document", "PV of Deliberation — Session 2026"],
+                  ["Document", `PV of Deliberation — ${session?.name ?? "No closed session"}`],
                   [
                     "Admitted",
-                    `${mockResults.filter((r) => r.status === "ADMITTED").length} candidates`,
+                    `${results.filter((r) => r.status === "ADMITTED").length} candidates`,
                   ],
                   [
                     "Waiting List",
-                    `${mockResults.filter((r) => r.status === "WAITING_LIST").length} candidates`,
+                    `${results.filter((r) => r.status === "WAITING_LIST").length} candidates`,
                   ],
                   [
                     "Rejected",
-                    `${mockResults.filter((r) => r.status === "REJECTED").length} candidates`,
+                    `${results.filter((r) => r.status === "REJECTED").length} candidates`,
                   ],
                   ["Status", "Official · Signed · Archived"],
                 ].map(([k, v]) => (
@@ -236,7 +270,7 @@ const PVModal = ({
                 <button
                   type="button"
                   onClick={handleAction}
-                  disabled={loading}
+                  disabled={loading || !session}
                   className="flex-1 py-2.5 rounded-xl bg-[#8B7355] text-white text-xs font-bold hover:bg-[#7a6449] transition-colors flex items-center justify-center gap-2"
                 >
                   {loading ? (
@@ -269,8 +303,43 @@ export const OfficialResultsPage = () => {
   const [statusFilter, setStatusFilter] = useState<ResultStatus | "ALL">("ALL");
   const [search, setSearch] = useState("");
   const [pvMode, setPvMode] = useState<"print" | "export" | null>(null);
+  const [results, setResults] = useState<Result[]>([]);
+  const [selectedSession, setSelectedSession] = useState<ExamSession | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = mockResults
+  useEffect(() => {
+    api.sessions.list()
+      .then(async (res) => {
+        const closedSession =
+          res.results.find((session) => session.status === "CLOSED") ??
+          null;
+        const fallbackSession =
+          closedSession ??
+          res.results.find((session) => session.status === "ACTIVE") ??
+          res.results[0] ??
+          null;
+        setSelectedSession(fallbackSession);
+        if (closedSession) {
+          const apiResults = await api.deliberation.results(closedSession.id);
+          const mapped = apiResults.map((r: ApiResult) => ({
+            rank: r.rank,
+            name: r.candidate_name,
+            code: r.application_number,
+            avg: parseFloat(r.final_score),
+            status: (r.decision === "ADMITTED" ? "ADMITTED" : r.decision === "WAITLIST" ? "WAITING_LIST" : "REJECTED") as ResultStatus,
+            math: 0,
+            english: 0,
+            specialty: 0,
+          } as Result));
+          setResults(mapped);
+        }
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const allResults = results;
+  const filtered = allResults
     .filter((r) => statusFilter === "ALL" || r.status === statusFilter)
     .filter(
       (r) =>
@@ -279,13 +348,11 @@ export const OfficialResultsPage = () => {
         r.code.toLowerCase().includes(search.toLowerCase()),
     );
 
-  const admitted = mockResults.filter((r) => r.status === "ADMITTED").length;
-  const waitlist = mockResults.filter(
-    (r) => r.status === "WAITING_LIST",
-  ).length;
-  const generalAvg = (
-    mockResults.reduce((s, r) => s + r.avg, 0) / mockResults.length
-  ).toFixed(2);
+  const admitted = allResults.filter((r) => r.status === "ADMITTED").length;
+  const waitlist = allResults.filter((r) => r.status === "WAITING_LIST").length;
+  const generalAvg = allResults.length > 0
+    ? (allResults.reduce((s, r) => s + r.avg, 0) / allResults.length).toFixed(2)
+    : "—";
 
   const rankStyle = (rank: number) =>
     rank === 1
@@ -299,7 +366,14 @@ export const OfficialResultsPage = () => {
   return (
     <AppShell title="Official Results">
       <AnimatePresence>
-        {pvMode && <PVModal mode={pvMode} onClose={() => setPvMode(null)} />}
+        {pvMode && (
+          <PVModal
+            mode={pvMode}
+            session={selectedSession?.status === "CLOSED" ? selectedSession : null}
+            results={allResults}
+            onClose={() => setPvMode(null)}
+          />
+        )}
       </AnimatePresence>
 
       {/* Full page layout — no overflow */}
@@ -309,7 +383,7 @@ export const OfficialResultsPage = () => {
           {[
             {
               label: "Total Candidates",
-              value: "1,248",
+              value: allResults.length || "—",
               Icon: Users,
               cls: "text-primary-accent bg-primary-accent/10",
             },
@@ -393,8 +467,7 @@ export const OfficialResultsPage = () => {
                         ? admitted
                         : f === "WAITING_LIST"
                           ? waitlist
-                          : mockResults.filter((r) => r.status === "REJECTED")
-                              .length}
+                          : allResults.filter((r) => r.status === "REJECTED").length}
                     </span>
                   )}
                 </button>
@@ -447,7 +520,7 @@ export const OfficialResultsPage = () => {
                 <Lock size={9} /> Official
               </span>
               <span className="text-[10px] font-bold bg-gray-100 text-gray-600 border border-gray-200 px-2.5 py-0.5 rounded-full">
-                Session 2026
+                {selectedSession?.name ?? "No session"}
               </span>
             </div>
           </div>
@@ -527,7 +600,11 @@ export const OfficialResultsPage = () => {
                       colSpan={7}
                       className="p-10 text-center text-muted text-xs"
                     >
-                      No candidates match your filter.
+                      {loading
+                        ? "Loading results..."
+                        : selectedSession?.status !== "CLOSED"
+                          ? "Official results are available only after a session is closed."
+                          : "No candidates match your filter."}
                     </td>
                   </tr>
                 )}
@@ -542,7 +619,7 @@ export const OfficialResultsPage = () => {
               <span className="font-semibold text-text-primary">
                 {filtered.length}
               </span>{" "}
-              of <span className="font-semibold text-text-primary">1,248</span>{" "}
+              of <span className="font-semibold text-text-primary">{allResults.length || "—"}</span>{" "}
               candidates
             </p>
             <p className="text-xs text-muted flex items-center gap-1.5">

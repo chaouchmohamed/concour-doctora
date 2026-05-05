@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ROUTES } from './constants';
 import { AuthProvider } from './context/AuthContext';
+import { SessionProvider } from './context/SessionContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { UserRole } from './types';
 
@@ -28,7 +29,8 @@ const { ADMIN, CFD_HEAD, COORDINATOR, CORRECTOR, SUPERVISOR, JURY_PRESIDENT, JUR
 export default function App() {
   return (
     <AuthProvider>
-      <Router>
+      <SessionProvider>
+        <Router>
         <Routes>
           {/* Public */}
           <Route path={ROUTES.HOME} element={<LandingPage />} />
@@ -134,6 +136,7 @@ export default function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Router>
+      </SessionProvider>
     </AuthProvider>
   );
 }
