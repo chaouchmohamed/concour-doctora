@@ -1,0 +1,2027 @@
+République Algérienne Démocratique et Populaire
+Ministère de l’Enseignement supérieur et de la Recherche scientifique
+École Supérieure en Informatique — Sidi Bel Abbès (ESI-SBA)
+
+Software Requirements Specification
+cahier des charges
+
+ConcoursDoctor
+
+Version
+
+1.1.0
+
+Date
+
+29-03-2026
+
+Lead Author
+
+Mohamed Chaouch Abdellah
+
+Team Members
+
+Mohamed Chaouch Abdellah
+Meddour Ahmed Redha
+Aboubakr Belhadji
+Ali Boukermouch
+Younes Belfaci
+
+Supervisors
+
+Malki Mimoun & Malki Abdelhamid
+
+Academic Year
+
+2025 / 2026
+
+Table des matières
+
+1 Introduction
+1.1 Purpose . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+1.2 Scope . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+1.3 Product Perspective . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+1.3.1 System Interfaces . . . . . . . . . . . . . . . . . . . . . . . . . .
+1.3.2 User Interfaces . . . . . . . . . . . . . . . . . . . . . . . . . . .
+1.3.3 Hardware Interfaces . . . . . . . . . . . . . . . . . . . . . . . . .
+1.3.4 Software Interfaces . . . . . . . . . . . . . . . . . . . . . . . . .
+1.3.5 Communication Interfaces . . . . . . . . . . . . . . . . . . . . .
+1.4 Product Functions Summary . . . . . . . . . . . . . . . . . . . . . . . .
+1.5 User Characteristics . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+1.6 Limitations . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+1.7 Assumptions and Dependencies . . . . . . . . . . . . . . . . . . . . . .
+1.8 Definitions . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+1.9 Acronyms and Abbreviations . . . . . . . . . . . . . . . . . . . . . . . .
+
+3
+3
+3
+3
+4
+4
+4
+4
+4
+5
+5
+6
+6
+7
+8
+
+2 Requirements
+2.1 External Interfaces . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+2.1.1 API Interface . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+2.1.2 File Import Interface . . . . . . . . . . . . . . . . . . . . . . . .
+2.1.3 Scanner Interface . . . . . . . . . . . . . . . . . . . . . . . . . .
+2.2 Functional Requirements . . . . . . . . . . . . . . . . . . . . . . . . . .
+2.2.1 Authentication and Access Control . . . . . . . . . . . . . . . .
+2.2.2 Candidate Import and Management . . . . . . . . . . . . . . . .
+2.2.3 Examination Planning . . . . . . . . . . . . . . . . . . . . . . .
+2.2.4 Attendance Management . . . . . . . . . . . . . . . . . . . . . .
+2.2.5 Anonymization . . . . . . . . . . . . . . . . . . . . . . . . . . .
+2.2.6 Double Correction Management . . . . . . . . . . . . . . . . . .
+2.2.7 Electronic Deliberation . . . . . . . . . . . . . . . . . . . . . . .
+2.2.8 PV Management . . . . . . . . . . . . . . . . . . . . . . . . . .
+2.2.9 Audit Logging . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+2.3 Use Cases . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+2.4 Usability Requirements . . . . . . . . . . . . . . . . . . . . . . . . . . .
+2.5 Performance Requirements . . . . . . . . . . . . . . . . . . . . . . . . .
+2.6 Security Requirements . . . . . . . . . . . . . . . . . . . . . . . . . . .
+2.7 Data Requirements . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+2.7.1 Data Dictionary . . . . . . . . . . . . . . . . . . . . . . . . . . .
+2.7.2 Data Retention . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+9
+9
+9
+9
+9
+10
+10
+13
+17
+17
+22
+25
+29
+33
+35
+35
+42
+42
+43
+44
+44
+46
+
+1
+
+ConcoursDoctor — cahier des charges
+
+2.8
+2.9
+
+ESI-SBA 2026
+
+Design Constraints . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+Standards Compliance . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+46
+46
+
+3 Verification
+
+47
+
+4 Work Plan
+
+50
+
+2
+
+1. Introduction
+
+1.1 Purpose
+This Software Requirements Specification (SRS) defines the complete functional
+and non-functional requirements for ConcoursDoctor — an integrated web platform
+designed to manage the full lifecycle of doctoral entrance examinations at Algerian
+higher education institutions.
+This document serves as the authoritative agreement between the development team
+and the supervising faculty. It will be used as the primary reference throughout design,
+implementation, testing, and validation.
+
+1.2 Scope
+The ConcoursDoctor platform covers the entire doctoral examination process from
+the moment candidate data is imported to the moment the final results are officially
+signed and published. Specifically, the system handles :
+— Candidate importation from CSV/Excel files or via REST API from an existing
+pre-registration system
+— Examination planning : subjects, schedules, rooms, call lists
+— Real-time attendance tracking by exam room supervisors via a mobile-friendly
+interface
+— Anonymization of examination copies using unique cryptographically generated
+codes
+— Double-blind correction with automatic discrepancy detection and third-corrector
+arbitration
+— Electronic deliberation including final ranking, coefficient-weighted averages, and
+official PV generation
+— Audit logging of every sensitive action throughout the process
+Out of scope : The pre-registration platform, student academic records, and any
+systems prior to the point of candidate list delivery.
+
+1.3 Product Perspective
+ConcoursDoctor is a standalone system designed to interface with existing university
+information systems. It takes over after the pre-registration phase is complete.
+
+3
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+1.3.1 System Interfaces
+— Receives candidate data via REST API or CSV/Excel file import from the existing
+pre-registration system
+— Exports the final deliberation PV as a signed PDF document
+— Integrates with the institutional email server (SMTP) for automated convocation
+dispatch
+1.3.2 User Interfaces
+— Web application (React.js) for administrators, coordinators, correctors, and jury
+members — accessible on PC and tablet
+— Progressive Web App (PWA) optimized for tablet/smartphone use by exam
+supervisors in examination rooms, with offline-first capability
+1.3.3 Hardware Interfaces
+— Document scanners : exam copies are scanned and uploaded ; the system supports
+standard scanner output formats (PDF, JPEG)
+— Optional : QR code / barcode readers for automatic copy-to-code association
+1.3.4 Software Interfaces
+— Frontend : React.js — a component-based JavaScript library for building the user
+interface
+— Backend : Django REST Framework (Python) exposing a RESTful API documented
+via Swagger/OpenAPI
+— Database : MySQL with strict role-based access ; nominative and anonymous data
+stored in separate schemas
+— Authentication : JWT (JSON Web Token) via Django REST Framework SimpleJWT
+— Version control : Git / GitHub
+— Project management : Trello
+— Modeling and design : draw.io
+1.3.5 Communication Interfaces
+— HTTPS for all client-server communication (TLS 1.2 minimum)
+— SMTP for email notifications (convocations, alerts)
+— REST API for integration with the pre-registration system
+
+4
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+1.4 Product Functions Summary
+
+#
+
+Function
+
+F1 Import and manage candidate data
+F2 Plan examinations : subjects, schedules, rooms, call lists
+F3 Real-time attendance management by supervisors
+F4 Automatic anonymization of exam copies
+F5 Double-blind correction with discrepancy management
+F6 Electronic deliberation and final result generation
+F7 Audit logging and traceability of all sensitive actions
+Table 1.1 – Product Functions Summary
+
+1.5 User Characteristics
+
+#
+
+Actor
+
+Account Description
+
+1
+
+System Administrator
+
+✓
+
+Manages encryption keys, user accounts, database access rights, and system configuration
+
+2
+
+CFD Head
+
+✓
+
+Coordinates the entire exam process ; records the
+subject lottery result and generates the corresponding PV
+
+3
+
+Coordinator
+
+✓
+
+Assigns correctors to copies, manages grade discrepancies, designates third correctors
+
+4
+
+Corrector
+
+✓
+
+Accesses only their anonymously assigned copies
+to enter grades
+
+5
+
+Supervisor (Surveillant)
+
+✓
+
+Uses the PWA tablet interface to mark attendance in real time
+
+6
+
+Jury President
+
+✓
+
+Validates the deliberation and applies electronic
+signature to the PV
+
+7
+
+Jury Member
+
+✓
+
+Participates in the electronic deliberation session
+
+8
+
+Anonymity Commission
+
+✓
+
+4-member committee responsible for coding copies and uploading scanned exams
+
+9
+
+Subject Designers
+
+✗
+
+Physical actors only. Create exam subjects ; documented via PV of Subject Creation
+
+10
+
+Department Head
+
+✗
+
+Physical actor only. Supervises the lottery ceremony ; documented via PV of Subject Lottery
+
+11
+
+Director
+
+✗
+
+Physical actor only. Holds sealed envelopes overnight ; documented via PV of Subject Lottery
+
+5
+
+ConcoursDoctor — cahier des charges
+
+#
+
+Actor
+
+12
+
+Candidate
+
+ESI-SBA 2026
+
+Account Description
+✗
+
+Doctoral applicant ; does not interact with the
+platform directly
+
+1.6 Limitations
+— The system does not manage the pre-registration of candidates ; it begins at the
+point of receiving a validated candidate list
+— Physical steps (envelope sealing, overnight custody by the Director, subject lottery
+ceremony) are supported by PV generation but are not replaced by the software
+— Subject Designers, the Department Head, and the Director are physical actors with
+no system accounts ; their roles are recorded solely through generated PV documents
+— Offline functionality is limited to the Supervisor PWA ; all other interfaces require
+an active internet connection
+— The platform is designed for Algerian doctoral examination regulations and may
+require adaptation for other regulatory contexts
+— The platform cannot prevent a candidate from writing identifying information (e.g.,
+their name) directly on their exam copy. The physical anonymization procedure
+must include an explicit instruction to candidates prohibiting this, enforced by
+supervisors during the exam. Any copy found with visible identity information shall
+be flagged by the Anonymity Commission and handled according to institutional
+regulations
+
+1.7 Assumptions and Dependencies
+— The university’s hosting servers are operational, secured, and maintained by IT staff
+— The data format from the pre-registration system is stable, documented, and accessible via API or structured file export
+— Supervisors have access to a reliable Wi-Fi or 4G connection in examination rooms
+— All system users have valid institutional email addresses
+— Scanners for digitizing exam copies are available and produce standard output
+formats (PDF, JPEG)
+
+6
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+1.8 Definitions
+
+Term
+
+Definition
+
+Anonymous Code
+
+A unique cryptographically generated identifier assigned to
+each present candidate. Used as the sole identifier during
+the correction phase.
+
+Double-Blind Cor- A process where two correctors independently grade the
+rection
+same anonymized copy without knowledge of each other’s
+score or the candidate’s identity.
+PV (Procès-Verbal) An official administrative record documenting a specific step
+in the examination process.
+Discrepancy Thre- A configurable point difference (default : 3 points) above
+shold
+which an automatic alert is triggered when two correctors’
+grades differ.
+Third Corrector
+
+A designated corrector brought in by the Coordinator to
+arbitrate when two correctors’ grades exceed the discrepancy
+threshold.
+
+Deliberation
+
+The final phase where grades are aggregated, averages computed, candidates ranked, and results validated by the jury.
+
+Anonymity
+mission
+
+Com- A 4-member committee responsible for coding exam copies
+and maintaining the encrypted correspondence table.
+
+CFD
+
+Comité de Formation Doctorale — the Doctoral Training
+Committee.
+
+Physical Actor
+
+A participant who performs physical tasks but holds no
+system account and does not interact with the platform
+directly.
+Table 1.3 – Definitions
+
+7
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+1.9 Acronyms and Abbreviations
+
+Acronym
+
+Meaning
+
+API
+
+Application Programming Interface
+
+CFD
+
+Comité de Formation Doctorale
+
+CSV
+
+Comma-Separated Values
+
+JWT
+
+JSON Web Token
+
+CSPRNG
+
+Cryptographically Secure Pseudo-Random Number Generator
+
+PV
+
+Procès-Verbal
+
+PWA
+
+Progressive Web App
+
+RBAC
+
+Role-Based Access Control
+
+REST
+
+Representational State Transfer
+
+SRS
+
+Software Requirements Specification
+
+TLS
+
+Transport Layer Security
+Table 1.4 – Acronyms and Abbreviations
+
+8
+
+2. Requirements
+
+2.1 External Interfaces
+2.1.1 API Interface
+CD-EI-01
+
+The backend shall expose a RESTful API documented with Swagger/OpenAPI 3.0,
+accessible at /api/docs/.
+CD-EI-02
+
+All API endpoints shall require JWT authentication except /api/auth/login/.
+CD-EI-03
+
+The system shall provide a /api/import/candidates/ endpoint accepting JSON
+payloads from the external pre-registration system.
+2.1.2 File Import Interface
+CD-EI-04
+
+The system shall accept candidate data imports from CSV and Excel (.xlsx) files
+following a documented column schema.
+CD-EI-05
+
+Upon import, the system shall validate each record and report errors (missing fields,
+duplicate entries, invalid email format) before committing to the database.
+2.1.3 Scanner Interface
+CD-EI-06
+
+The system shall accept scanned exam copy uploads in PDF and JPEG formats.
+CD-EI-07
+
+Optionally, the system shall support automatic QR code / barcode detection on
+uploaded scan images to associate copies with their anonymous codes without
+manual input.
+
+9
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+2.2 Functional Requirements
+2.2.1 Authentication and Access Control
+CD-FR-AUTH-01
+
+The system shall authenticate all users via email and password, issuing a JWT
+token valid for 8 hours upon success.
+CD-FR-AUTH-02
+
+The system shall invalidate a user’s JWT token upon logout.
+CD-FR-AUTH-03
+
+After 3 consecutive failed login attempts, the system shall lock the account for 15
+minutes and notify the System Administrator.
+CD-FR-AUTH-04
+
+The system shall enforce Role-Based Access Control (RBAC) with the following
+roles : ADMIN, CFD_HEAD, COORDINATOR, CORRECTOR, SUPERVISOR, JURY_PRESIDENT,
+JURY_MEMBER, ANONYMITY_COMMISSION. Subject Designers, the Department Head,
+and the Director are physical actors and shall not have system accounts.
+CD-FR-AUTH-05
+
+Each role shall have a strictly defined set of permitted actions. No role shall be able
+to perform actions outside its defined scope.
+
+10
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+Figure 2.1 – UC-D1 : System Overview — All Actors and Use Cases
+
+11
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+Figure 2.2 – UC-D2 : Authentication & Access Control
+
+12
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+2.2.2 Candidate Import and Management
+CD-FR-CAND-01
+
+The system shall allow the Administrator to import candidate lists via CSV/Excel
+file upload or via REST API call from the pre-registration system.
+CD-FR-CAND-02
+
+Imported candidate records shall include at minimum : full name, national ID
+number, email address, phone number, and application number.
+CD-FR-CAND-03
+
+The system shall automatically detect and reject duplicate records based on national
+ID number, presenting a detailed report of rejected entries to the Administrator.
+CD-FR-CAND-04
+
+Once all exam dates, times, and rooms have been scheduled, the system shall
+automatically generate and send a convocation email to each candidate containing :
+exam date, start time, room number, and application number.
+CD-FR-CAND-05
+
+The Administrator shall be able to manually add, edit, or deactivate individual
+candidate records before the examination begins.
+
+13
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+Figure 2.3 – UC-D3 : Candidate Import & Convocation
+
+14
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+Figure 2.4 – SD-2 : Sequence — Candidate Import (File Upload → Validation → DB
+→ Email)
+
+15
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+Figure 2.5 – AD-1 : Activity — Candidate Import & Validation Flow
+
+16
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+2.2.3 Examination Planning
+CD-FR-EXAM-01
+
+The Administrator shall be able to define one or more examination subjects, each
+with a name, coefficient, passing score threshold, and maximum score.
+CD-FR-EXAM-02
+
+The Administrator shall be able to schedule each exam subject with a specific date,
+start time, duration, and one or more assigned rooms.
+CD-FR-EXAM-03
+
+The system shall generate a printable call list (PDF) for each exam room, listing
+candidates sorted by seat number, including their application number and full name.
+CD-FR-EXAM-04
+
+The call list shall also be accessible digitally by supervisors via the PWA interface.
+CD-FR-EXAM-05
+
+The system shall support a subject lottery process : the CFD Head can record
+the lottery result (which of the 3 prepared subjects was selected) and generate the
+corresponding PV.
+2.2.4 Attendance Management
+CD-FR-ATT-01
+
+The Supervisor shall be able to mark each candidate as PRESENT or ABSENT
+via a touch-friendly PWA interface during the exam.
+CD-FR-ATT-02
+
+The PWA interface shall function in offline mode, storing attendance data locally
+and synchronizing automatically when internet connectivity is restored.
+CD-FR-ATT-03
+
+The Supervisor shall be able to undo an attendance marking for a candidate at any
+time before the final attendance submission is confirmed.
+CD-FR-ATT-04
+
+The system shall display a real-time counter showing how many candidates have
+been marked out of the total expected per room.
+CD-FR-ATT-05
+Any candidate marked ABSENT for a mandatory examination shall be automatically and
+permanently eliminated from the competition. Their status shall be set to ELIMINATED
+and they shall not appear in any further correction or deliberation steps.
+
+17
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+CD-FR-ATT-06
+
+After the exam ends, the system shall generate a PV of Surveillance including : total
+present, total absent, list of absentees, and any incidents noted by the supervisor.
+CD-FR-ATT-07
+
+As a fallback, the Administrator shall be able to import attendance data from a
+CSV file after the exam concludes.
+
+18
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+Figure 2.6 – UC-D4 : Exam Planning & Attendance Management
+
+19
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+Figure 2.7 – SD-3 : Sequence — Attendance Marking (Offline PWA → Sync to Server)
+
+20
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+Figure 2.8 – AD-2 : Activity — Attendance Management Flow
+
+21
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+2.2.5 Anonymization
+CD-FR-ANON-01
+
+Upon confirmation of attendance, the system shall automatically generate a unique
+anonymous code for each PRESENT candidate in the format DOCT-YYYY-XXXX,
+where YYYY is the exam year and XXXX is a zero-padded number derived from
+a cryptographically secure pseudo-random number generator (CSPRNG). This
+supports up to 9,999 candidates per session, which is sufficient for doctoral exam
+scale.
+CD-FR-ANON-02
+
+The correspondence table linking a candidate’s identity to their anonymous code
+shall be stored in encrypted form in a separate database schema. This table is
+accessible only to the internal system process during the deliberation closure
+operation, and to the ADMIN role for audit purposes. No other user role can query it
+at any time.
+CD-FR-ANON-03
+
+The Anonymity Commission shall scan and upload exam copies. Each copy shall
+be associated with its anonymous code either manually (by entering the code) or
+automatically (via QR/barcode detection).
+CD-FR-ANON-04
+
+Once the association between a copy and its anonymous code is confirmed, the
+system shall hide all candidate identity information from all correction-phase
+interfaces. Only the anonymous code shall be visible to correctors and coordinators.
+CD-FR-ANON-05
+
+The system shall generate a PV of Anonymization recording the number of copies
+coded and the timestamp of the operation, signed by the Anonymity Commission
+members.
+
+22
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+Figure 2.9 – UC-D5 : Anonymization — Code Generation & Copy Association
+
+23
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+Figure 2.10 – SD-4 : Sequence — Anonymization (Attendance Confirmed → Code
+Generation → Copy Upload → Association)
+
+24
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+2.2.6 Double Correction Management
+CD-FR-COR-01
+
+The Coordinator shall assign each anonymized copy to exactly two Correctors for
+independent blind correction.
+CD-FR-COR-02
+
+Each Corrector shall only see the copies assigned to them, identified solely by their
+anonymous code.
+CD-FR-COR-03
+
+Each Corrector shall enter a numerical grade for each assigned copy. The interface
+shall enforce the configured score range (0 to maximum score).
+CD-FR-COR-04
+
+Once both grades are entered for a copy, the system shall automatically calculate
+the absolute difference between them.
+CD-FR-COR-05
+
+If the difference exceeds the configured discrepancy threshold (default : 3 points),
+the system shall immediately trigger an alert to the Coordinator.
+CD-FR-COR-06
+
+The Coordinator shall be able to designate a third Corrector to arbitrate discrepant copies. The third Corrector’s interface shall display both existing grades
+anonymously before they enter their own grade.
+CD-FR-COR-07
+
+The final grade for a copy shall be computed according to the configured rule :
+AVERAGE (of two grades), MEDIAN (of three grades), or THIRD_CORRECTOR (use only
+the third corrector’s grade). This rule is configurable per exam subject.
+CD-FR-COR-08
+
+Once the Coordinator validates the final grades for an exam subject, no Corrector
+shall be able to modify any grade for that subject.
+CD-FR-COR-09
+
+The system shall generate a PV of Correction recording all final grades, the number
+of discrepancies encountered, and the arbitration decisions made.
+
+25
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+Figure 2.11 – UC-D6 : Double Correction & Discrepancy Management
+
+26
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+Figure 2.12 – SD-5 : Sequence — Grade Entry & Discrepancy Detection
+
+27
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+Figure 2.13 – AD-3 : Activity — Double Correction Flow
+
+28
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+2.2.7 Electronic Deliberation
+CD-FR-DEL-01
+
+The deliberation phase shall be accessible only to users with roles JURY_PRESIDENT
+and JURY_MEMBER, and only after all exam subjects have been validated by the
+Coordinator.
+CD-FR-DEL-02
+
+The system shall automatically compute each candidate’s weighted average using
+the configured coefficients per subject.
+CD-FR-DEL-03
+
+The system shall generate a provisional ranking of all eligible candidates, sorted
+by descending weighted average. The ranking shall display only anonymous codes
+until deliberation is closed.
+CD-FR-DEL-04
+
+The system shall apply the configured admissibility threshold (e.g., minimum
+average of 10/20) and automatically flag candidates as ADMITTED, WAITING_LIST,
+or REJECTED.
+CD-FR-DEL-05
+
+The Jury President shall be able to mark the deliberation as closed. This action
+shall be irreversible without Administrator intervention.
+CD-FR-DEL-06
+
+Upon closure of deliberation, the internal system process shall automatically lift
+anonymity by replacing all anonymous codes in the results with the corresponding
+candidate identities, using the encrypted correspondence table. This operation is
+performed by the system itself ; no human user directly accesses the correspondence
+table during this step.
+CD-FR-DEL-07
+
+The system shall generate the official PV of Deliberation in PDF format, including :
+full ranked results with real identities, admitted candidates list, waiting list, rejected
+candidates list, and timestamp of deliberation closure.
+CD-FR-DEL-08
+
+The system shall support optional electronic signatures on the PV by the Jury
+President and Jury Members.
+CD-FR-DEL-09
+
+All deliberation data (grades, PV, logs) shall be archived with a timestamp and
+shall be immutable after deliberation closure.
+
+29
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+Figure 2.14 – UC-D7 : Deliberation & Results Publication
+
+30
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+Figure 2.15 – SD-6 : Sequence — Deliberation Closure & Anonymity Lifting
+
+31
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+Figure 2.16 – AD-4 : Activity — Deliberation Flow
+
+32
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+2.2.8 PV Management
+CD-FR-PV-01
+
+The system shall generate the following official PVs at their respective process
+stages :
+
+PV
+
+Trigger
+
+Generated By
+
+PV of Subject Crea- Subject designers submit subjects (re- CFD Head
+tion
+corded by CFD Head)
+PV of Subject Lottery Lottery result recorded
+PV of Attendance
+
+Exam ends and supervisor submits
+
+PV of Anonymization Coding complete
+
+CFD Head
+Supervisor
+Anonymity Commission
+
+PV of Correction
+
+Grades validated
+
+Coordinator
+
+PV of Deliberation
+
+Deliberation closed
+
+Jury President
+
+Table 2.1 – PV Generation Summary
+CD-FR-PV-02
+
+Each PV shall be generated in PDF format and be downloadable by authorized
+roles.
+CD-FR-PV-03
+
+Each PV shall include a unique document identifier, timestamp, and the names of
+the responsible actors.
+
+33
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+Figure 2.17 – TD-1 : End-to-End Examination Lifecycle — From Candidate Import
+to Results Publication
+
+34
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+2.2.9 Audit Logging
+CD-FR-LOG-01
+
+The system shall maintain an immutable audit log recording every sensitive action
+performed by any user.
+CD-FR-LOG-02
+
+Each log entry shall capture : timestamp, user ID, user role, IP address, action
+type, and the affected object (e.g., copy ID, candidate ID).
+CD-FR-LOG-03
+
+Actions that must be logged include (but are not limited to) : login/logout, grade
+entry, grade modification, identity access, deliberation closure, PV generation, and
+any Administrator configuration change.
+CD-FR-LOG-04
+
+The audit log shall be accessible only to the System Administrator and shall not be
+editable or deletable by any user.
+
+2.3 Use Cases
+
+35
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+UC-01 — Import Candidate List
+
+Field
+
+Detail
+
+ID
+
+UC-01
+
+Actor
+
+System Administrator
+
+Precondition
+
+Administrator is authenticated. Pre-registration system has
+exported a CSV/Excel file or the API is accessible.
+
+Trigger
+
+Administrator navigates to "Import Candidates" and uploads a
+file or triggers API sync.
+
+Normal Flow
+
+1. Upload file or click "Sync from API" → 2. System validates all
+records → 3. System displays preview report → 4. Administrator
+confirms → 5. System commits valid records → 6. Convocation
+emails sent once exam scheduling is complete
+
+Alt. Flow A
+
+Some records invalid : Administrator downloads error report,
+corrects file, re-imports. No duplicates created.
+
+Alt. Flow B
+
+API sync fails : System displays connection error. Administrator
+retries or uploads manually.
+
+Exception
+
+If 0 valid records found, no import committed. Administrator
+notified.
+
+Postcondition
+
+Candidate records in DB with status REGISTERED. Convocation
+emails sent after scheduling.
+Table 2.2 – UC-01 : Import Candidate List
+
+36
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+UC-02 — Mark Attendance (Supervisor)
+
+Field
+
+Detail
+
+ID
+
+UC-02
+
+Actor
+
+Supervisor
+
+Precondition
+
+Supervisor is authenticated. Exam scheduled and assigned to
+this supervisor’s room.
+
+Trigger
+
+Supervisor opens the PWA and selects the active exam room.
+
+Normal Flow
+
+1. System displays call list sorted by seat number → 2. Supervisor marks each candidate PRESENT or ABSENT → 3. Live
+counter displayed → 4. Supervisor taps "Submit Attendance"
+→ 5. System saves attendance, generates PV, marks absent
+candidates as ELIMINATED
+
+Alt. Flow A
+
+No internet : PWA stores data locally. On connectivity restore,
+data syncs automatically.
+
+Alt. Flow B
+
+Incorrect marking : Supervisor toggles candidate status before
+final submission.
+
+Exception
+
+Submission blocked if any candidates remain unmarked. Unmarked rows highlighted.
+
+Postcondition
+
+All candidates have attendance status. Absent candidates permanently eliminated. PV stored.
+Table 2.3 – UC-02 : Mark Attendance
+
+37
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+UC-03 — Enter Correction Grade
+
+Field
+
+Detail
+
+ID
+
+UC-03
+
+Actor
+
+Corrector
+
+Precondition
+
+Corrector is authenticated. Copies anonymized and assigned
+by Coordinator.
+
+Trigger
+
+Corrector logs in and opens assigned copies list.
+
+Normal Flow
+
+1. System shows assigned anonymous copies → 2. Corrector
+opens a copy, views scanned document → 3. Corrector enters
+grade within allowed range → 4. System saves grade → 5.
+If second grade exists, system computes difference and alerts
+Coordinator if threshold exceeded
+
+Alt. Flow
+
+Grade outside valid range : system blocks submission and
+displays allowed range.
+
+Exception
+
+Subject locked by Coordinator : grade entry disabled and message shown.
+
+Postcondition
+
+Grade recorded against anonymous code. Coordinator alerted
+if discrepancy detected.
+Table 2.4 – UC-03 : Enter Correction Grade
+
+38
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+UC-04 — Resolve Grade Discrepancy
+
+Field
+
+Detail
+
+ID
+
+UC-04
+
+Actor
+
+Coordinator
+
+Precondition
+
+Both correctors submitted grades. Difference exceeds configured
+threshold.
+
+Trigger
+
+System sends alert to Coordinator. Coordinator opens discrepancy dashboard.
+
+Normal Flow
+
+1. Coordinator sees flagged copies with both grades anonymously → 2. Selects "Assign Third Corrector" → 3. Designates
+a third Corrector → 4. Third Corrector enters grade → 5. System computes final grade per configured rule → 6. Coordinator
+confirms
+
+Alt. Flow
+
+Coordinator deems discrepancy acceptable : selects one of the
+two grades as final with mandatory written justification.
+
+Postcondition
+
+Final grade locked. Resolution recorded in audit log and included in PV of Correction.
+Table 2.5 – UC-04 : Resolve Grade Discrepancy
+
+39
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+UC-05 — Close Deliberation and Lift Anonymity
+
+Field
+
+Detail
+
+ID
+
+UC-05
+
+Actor
+
+Jury President
+
+Precondition
+
+All exam subjects validated by Coordinator. Jury President
+authenticated.
+
+Trigger
+
+Jury President navigates to the Deliberation dashboard.
+
+Normal Flow
+
+1. System displays provisional ranking (anonymous codes only)
+→ 2. Jury reviews results → 3. Jury President clicks "Close
+Deliberation" → 4. System requests irreversible confirmation
+→ 5. Jury President confirms → 6. System process lifts anonymity → 7. System generates PV of Deliberation → 8. Jury
+President applies e-signature → 9. System archives signed PV
+with timestamp
+
+Exception
+
+If any subject has unvalidated grades, "Close Deliberation"
+button is disabled and blocking subjects are listed.
+
+Postcondition
+
+Anonymity permanently lifted. Official results published. PV
+signed, timestamped, archived.
+
+Table 2.6 – UC-05 : Close Deliberation and Lift Anonymity
+
+40
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+Figure 2.18 – SD-1 : Sequence — User Login (Client → API → JWT Flow)
+
+41
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+2.4 Usability Requirements
+CD-NFR-ERG-01
+
+The React.js web interface shall be fully responsive, functioning correctly on screens
+with widths from 320px (smartphones) to 2560px (large monitors).
+CD-NFR-ERG-02
+
+The Supervisor PWA shall allow a trained supervisor to mark attendance for 30
+candidates in under 3 minutes under normal conditions.
+CD-NFR-ERG-03
+
+All form validation errors shall be displayed inline, adjacent to the problematic
+field, with a clear and human-readable message.
+CD-NFR-ERG-04
+
+Every destructive or irreversible action (e.g., eliminating a candidate, closing
+deliberation) shall require a confirmation dialog explicitly stating the consequences.
+CD-NFR-ERG-05
+
+The Corrector interface shall display the scanned copy and the grade input field on
+the same screen without requiring horizontal scrolling.
+
+2.5 Performance Requirements
+CD-NFR-PERF-01
+
+The Supervisor PWA shall fully load within 2 seconds on a 3G mobile connection
+(estimated bandwidth : 3 Mbps).
+CD-NFR-PERF-02
+
+All API responses shall complete within 500ms under normal load conditions (fewer
+than 200 concurrent users).
+CD-NFR-PERF-03
+
+The system shall support at least 500 concurrent authenticated users without
+degradation in response time.
+CD-NFR-PERF-04
+
+PDF generation for PVs and result documents shall complete within 10 seconds
+regardless of the number of candidates.
+
+42
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+CD-NFR-PERF-05
+
+The system shall maintain 99.5% uptime during examination periods (defined as
+±7 days around any scheduled exam date).
+
+2.6 Security Requirements
+CD-NFR-SEC-01
+
+All data in transit shall be encrypted using TLS 1.2 or higher. HTTP connections
+shall be automatically redirected to HTTPS.
+CD-NFR-SEC-02
+
+All user passwords shall be hashed using bcrypt with a minimum cost factor of 12
+before storage.
+CD-NFR-SEC-03
+
+JWT tokens shall expire after 8 hours. Refresh tokens shall expire after 24 hours.
+CD-NFR-SEC-04
+
+The identity-to-anonymous-code correspondence table shall be stored in a separate
+MySQL schema, accessible only to the internal system process during deliberation
+closure and to the ADMIN role for audit purposes. No other user role may query this
+table at any time.
+CD-NFR-SEC-05
+
+The correction server shall have no database-level access to the nominative candidate
+table.
+CD-NFR-SEC-06
+
+Every access to a candidate’s identity, every grade modification, and every configuration change shall generate an immutable log entry as defined in [CD-FR-LOG-01].
+CD-NFR-SEC-07
+
+Once grades are validated by the Coordinator, they shall be immutable. Any
+modification attempt shall be blocked at the API level and logged.
+CD-NFR-SEC-08
+
+The system shall implement OWASP Top 10 protections including SQL injection
+prevention, XSS sanitization, and CSRF protection on all state-changing endpoints.
+CD-NFR-SEC-09
+
+The database shall be automatically backed up every 24 hours. Backups shall be
+encrypted and stored separately from the main server.
+
+43
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+2.7 Data Requirements
+2.7.1 Data Dictionary
+Entity : Candidate
+
+Req.
+
+Description
+
+Field
+
+Type
+
+id
+
+INT (PK)
+
+✓
+
+Auto-increment internal identifier
+
+national_id
+
+VARCHAR(20)
+UNIQUE
+
+✓
+
+Algerian
+number
+
+last_name
+
+VARCHAR(100)
+
+✓
+
+first_name
+
+VARCHAR(100)
+
+✓
+
+email
+
+VARCHAR(150)
+
+✓
+
+phone
+
+VARCHAR(20)
+
+✓
+
+application_number
+
+VARCHAR(20)
+UNIQUE
+
+✓
+
+From pre-registration system
+
+status
+
+ENUM
+
+✓
+
+REGISTERED,
+PRESENT,
+ABSENT, ELIMINATED
+
+imported_at
+
+DATETIME
+
+✓
+
+Timestamp of import
+
+national
+
+identity
+
+Used for convocation
+
+Table 2.7 – Entity : Candidate
+Entity : AnonymousCode
+
+Req.
+
+Description
+
+Field
+
+Type
+
+id
+
+INT (PK)
+
+✓
+
+code
+
+VARCHAR(20)
+UNIQUE
+
+✓
+
+e.g., DOCT-2026-0042
+
+✓
+
+AES-256 encrypted reference
+to Candidate
+
+candidate_id_encryptedTEXT
+exam_session_id
+
+INT (FK)
+
+✓
+
+generated_at
+
+DATETIME
+
+✓
+
+Table 2.8 – Entity : AnonymousCode
+
+44
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+Entity : ExamSubject
+
+Req.
+
+Description
+
+Field
+
+Type
+
+id
+
+INT (PK)
+
+✓
+
+name
+
+VARCHAR(200)
+
+✓
+
+e.g., "Research Methodology"
+
+coefficient
+
+DECIMAL(4,2)
+
+✓
+
+Weight in final average
+
+max_score
+
+DECIMAL(5,2)
+
+✓
+
+Default : 20.00
+
+pass_threshold
+
+DECIMAL(5,2)
+
+✓
+
+Minimum score to pass
+
+discrepancy_threshold DECIMAL(5,2)
+
+✓
+
+Default : 3.00
+
+final_grade_rule
+
+ENUM
+
+✓
+
+AVERAGE,
+THIRD_CORRECTOR
+
+status
+
+ENUM
+
+✓
+
+DRAFT, ACTIVE, LOCKED
+
+MEDIAN,
+
+Table 2.9 – Entity : ExamSubject
+Entity : CopyGrade
+
+Field
+
+Type
+
+Req.
+
+id
+
+INT (PK)
+
+✓
+
+anonymous_code_id
+
+INT (FK)
+
+✓
+
+exam_subject_id
+
+INT (FK)
+
+✓
+
+corrector_id
+
+INT (FK)
+
+✓
+
+grade
+
+DECIMAL(5,2)
+
+✓
+
+correction_order
+
+ENUM
+
+✓
+
+submitted_at
+
+DATETIME
+
+✓
+
+is_final
+
+BOOLEAN
+
+✓
+
+Description
+
+FIRST, SECOND, THIRD
+True if this is the selected final
+grade
+
+Table 2.10 – Entity : CopyGrade
+
+45
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+Entity : AuditLog
+
+Type
+
+id
+
+INT (PK)
+
+✓
+
+timestamp
+
+DATETIME
+
+✓
+
+user_id
+
+INT (FK)
+
+✓
+
+role
+
+VARCHAR(50)
+
+✓
+
+ip_address
+
+VARCHAR(45)
+
+✓
+
+Supports IPv6
+
+action_type
+
+VARCHAR(100)
+
+✓
+
+e.g.,
+GRADE_SUBMITTED,
+IDENTITY_ACCESSED
+
+affected_object_type VARCHAR(50)
+
+✓
+
+e.g., CopyGrade, Candidate
+
+affected_object_id
+
+Req.
+
+Description
+
+Field
+
+✓
+
+INT
+
+Table 2.11 – Entity : AuditLog
+2.7.2 Data Retention
+— Candidate data, grades, and PVs shall be retained for a minimum of 10 years in
+accordance with Algerian administrative record-keeping regulations
+— Audit logs shall be retained for a minimum of 5 years
+— Backups shall be retained for 30 days on a rolling basis
+
+2.8 Design Constraints
+— The frontend shall be developed in React.js ; the backend shall be developed in
+Django (Python) using Django REST Framework
+— The database shall be MySQL 8.0 or higher
+— The Supervisor interface shall be implemented as a Progressive Web App (PWA)
+to support offline functionality
+— The anonymization database schema shall be physically separate from the nominative
+schema and protected by distinct MySQL user credentials
+— The application shall be deployable on the university’s on-premises Linux server
+environment
+— Modeling and design tools : draw.io
+
+2.9 Standards Compliance
+— ISO/IEC/IEEE 29148 :2018 — Requirements Engineering (this document)
+— OWASP Top 10 — Web application security
+— Algerian Law 18-07 — Personal data protection
+— Internal ESI-SBA regulations — Doctoral examination procedures
+46
+
+3. Verification
+
+The following sections map each requirement to its verification method, grouped by
+functional area.
+
+Authentication & Access Control
+
+Requirement
+
+Method
+
+Test Description
+
+CD-FR-AUTH-01
+
+Test
+
+Login with valid credentials → JWT issued.
+Login with wrong password → rejected.
+
+CD-FR-AUTH-03
+
+Test
+
+3 failed logins → account locked for 15 minutes.
+
+Candidate Import & Convocation
+
+Requirement
+
+Method
+
+Test Description
+
+CD-FR-CAND-01
+
+Test
+
+Upload valid CSV → records appear in DB.
+Upload invalid CSV → error report shown.
+
+CD-FR-CAND-04
+
+Test
+
+Complete exam scheduling → convocation
+email received by candidate.
+
+Attendance Management
+
+Requirement
+
+Method
+
+Test Description
+
+CD-FR-ATT-02
+
+Test
+
+Disable network → mark attendance → reenable network → data appears on server.
+
+CD-FR-ATT-03
+
+Test
+
+Mark candidate, then toggle before submission
+→ status changes correctly.
+
+CD-FR-ATT-05
+
+Test
+
+Mark candidate absent → verify ELIMINATED
+status → verify no appearance in deliberation.
+
+47
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+Anonymization
+
+Requirement
+
+Method
+
+Test Description
+
+CD-FR-ANON-02
+
+Test
+
+Attempt to query correspondence table as
+CORRECTOR role → 403 Forbidden.
+
+Double Correction
+
+Requirement
+
+Method
+
+Test Description
+
+CD-FR-COR-05
+
+Test
+
+Enter two grades differing by more than threshold → verify Coordinator alert triggered.
+
+CD-FR-COR-08
+
+Test
+
+Lock subject → attempt grade edit as Corrector → verify blocked at API level.
+
+Requirement
+
+Method
+
+Test Description
+
+CD-FR-DEL-06
+
+Test
+
+Close deliberation → verify real names replace
+codes in results view.
+
+Requirement
+
+Method
+
+Test Description
+
+CD-NFR-PERF-01
+
+Benchmark
+
+Load PWA on throttled 3G connection → measure load time (must be < 2s).
+
+CD-NFR-PERF-03
+
+Load Test
+
+Simulate 500 concurrent users → verify response times < 500ms.
+
+Deliberation
+
+Performance
+
+48
+
+ConcoursDoctor — cahier des charges
+
+ESI-SBA 2026
+
+Security
+
+Requirement
+
+Method
+
+Test Description
+
+CD-NFR-SEC-02
+
+Inspection
+
+Extract password hash from DB → verify
+bcrypt format with cost ≥ 12.
+
+CD-NFR-SEC-07
+
+Test
+
+Validate grades as Coordinator → attempt API
+PATCH on grade → verify 403 response.
+
+49
+
+4. Work Plan
+
+Phase
+
+Tasks
+
+Milestone
+
+Duration
+
+1. Analysis
+
+Finalize SRS, validate with supervisors
+
+Signed and approved
+SRS
+
+2 weeks
+
+2. Design
+
+UML diagrams, database schema, UI
+wireframes
+
+Design document complete
+
+1 week
+
+3. Sprint 1
+
+Auth system, user management, candi- Working auth + import
+date import, convocation emails
+module
+
+1 week
+
+4. Sprint 2
+
+Exam planning, supervisor PWA, atten- Working attendance modance management, automatic elimina- dule
+tion
+
+2 weeks
+
+5. Sprint 3
+
+Anonymization, copy upload, QR code
+detection, copy-code association
+
+Working anonymization
+module
+
+2 weeks
+
+6. Sprint 4
+
+Double correction interface, discrepancy
+detection, third-corrector flow, grade
+locking
+
+Working correction module
+
+2 weeks
+
+7. Sprint 5
+
+Deliberation engine, ranking, PV gene- Working
+ration, e-signature, anonymity lifting
+module
+
+8. Integration &
+Testing
+
+End-to-end testing, load testing, secu- All tests passing
+rity audit, bug fixes
+
+2 weeks
+
+9. Report
+
+Final report, documentation, presenta- Final deliverable
+tion preparation
+
+1 week
+
+Table 4.1: Project Work Plan
+
+Total estimated duration : ∼15 weeks
+
+End of Document — ConcoursDoctor v1.1.0
+ESI-SBA, Sidi Bel Abbès, Algeria — 2026
+
+50
+
+deliberation
+
+2 weeks
+
+

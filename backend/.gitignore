@@ -1,5 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Django
+*.sqlite3
+*.db
 db.sqlite3
+database
+media/
+staticfiles/
+
+# Environment / secrets
 .env
-**/__pycache__/
-*.pyc
-logs/*.log
+.env.*
+!.env.example
+*.pem
+*.key
+*.secret
+
+# Testing
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+test_db.sqlite3
+test_anon_db.sqlite3
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+.codex

@@ -127,6 +127,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (storedUser) {
             setUser(JSON.parse(storedUser));
         }
+        // Basic sanity check for API_BASE. If environment provided a bare hostname
+        // (e.g. "localhost") without protocol, network requests will fail.
+        if (typeof API_BASE === 'string' && !/^https?:\/\//.test(API_BASE) && !API_BASE.startsWith('/')) {
+            // eslint-disable-next-line no-console
+            console.warn('API_BASE may be misconfigured:', API_BASE);
+        }
 
         if (getAccess()) {
             fetchMe();
@@ -137,21 +143,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
 
     const login = useCallback(async (email: string, password: string) => {
-        const res = await fetch(`${API_BASE}/auth/login/`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password }),
-        });
+        let res: Response;
+        try {
+            res = await fetch(`${API_BASE}/auth/login/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            });
+        } catch (networkErr) {
+            throw new Error('Network error while contacting authentication server');
+        }
 
         if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            throw new Error(err.error || 'Invalid credentials');
+            // Try to extract common error shapes from backend
+            const body = await res.json().catch(() => null);
+            const message =
+                (body && (body.detail || body.error || body.message)) ||
+                (body && body.non_field_errors && body.non_field_errors[0]) ||
+                `Login failed (${res.status})`;
+
+            throw new Error(message);
         }
 
         const data = await res.json();
+        if (!data?.access || !data?.refresh) {
+            throw new Error('Authentication succeeded but no tokens received from server');
+        }
+
         setTokens(data.access, data.refresh);
 
-        // Some backends return only tokens on login. Hydrate user/role from /auth/me.
+        // Some backends return the user on login; if present, store it.
         if (data.user) {
             const userData = data.user as AuthUser;
             setUser(userData);
@@ -159,6 +180,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             saveUserRole(userData);
         }
 
+        // Hydrate user/profile from /auth/me now that tokens are stored
         await fetchMe();
     }, [fetchMe]);
 

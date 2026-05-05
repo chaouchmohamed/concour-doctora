@@ -27,8 +27,8 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Always network for API calls
-  if (url.pathname.startsWith('/api/')) {
+  // Always network for same-origin API calls only
+  if (url.origin === self.location.origin && url.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(event.request).catch(() =>
         new Response(JSON.stringify({ error: 'Offline — changes saved locally' }), {
