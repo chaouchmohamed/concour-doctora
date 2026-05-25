@@ -3,3 +3,4 @@ gunicorn
 whitenoise
 mysqlclient
 dj-database-url
+python-dotenv

@@ -1,8 +1,11 @@
 import os
 from datetime import timedelta
 from pathlib import Path
+from dotenv import load_dotenv  # ← ajouter
 
 BASE_DIR = Path(__file__).resolve().parents[2]
+
+load_dotenv(BASE_DIR / "config" / "settings" / ".env") 
 
 
 def env(key: str, default: str | None = None) -> str | None:
@@ -93,7 +96,7 @@ ASGI_APPLICATION = "config.asgi.application"
 DATABASES = {
     "default": {
         "ENGINE": env("DB_ENGINE", "django.db.backends.mysql"),
-        "NAME": env("DB_NAME", "concours_nominative"),
+        "NAME": env("DB_NAME"),
         "USER": env("DB_USER", "concours_user"),
         "PASSWORD": env("DB_PASSWORD", "concours_password"),
         "HOST": env("DB_HOST", "127.0.0.1"),
@@ -102,7 +105,7 @@ DATABASES = {
     },
     "anonymization": {
         "ENGINE": env("ANON_DB_ENGINE", "django.db.backends.mysql"),
-        "NAME": env("ANON_DB_NAME", "concours_anonymization"),
+        "NAME": env("ANON_DB_NAME"),
         "USER": env("ANON_DB_USER", "anonymization_user"),
         "PASSWORD": env("ANON_DB_PASSWORD", "anonymization_password"),
         "HOST": env("ANON_DB_HOST", "127.0.0.1"),

@@ -3,6 +3,8 @@ import os
 import sys
 
 from config.env import bootstrap_environment
+from dotenv import load_dotenv
+load_dotenv()
 
 
 def main() -> None:
