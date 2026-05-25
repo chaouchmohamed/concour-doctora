@@ -82,7 +82,16 @@ class LogoutSerializer(serializers.Serializer):
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
-    """Implements lockout counters required by SRS (3 attempts => 15 min lock)."""
+    """Implements lockout counters required by SRS (3 attempts => 15 min lock).
+    Also embeds the user's role inside the JWT access token so the frontend
+    can perform RBAC routing immediately without an extra /me/ request.
+    """
+
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token["role"] = user.role
+        return token
 
     def validate(self, attrs):
         email = attrs.get("email")
@@ -103,5 +112,9 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         if user:
             user.clear_failed_logins()
+            # Enrich the login response with identity + role for instant frontend RBAC.
+            data["role"] = user.role
+            data["email"] = user.email
+            data["user_id"] = user.id
 
         return data

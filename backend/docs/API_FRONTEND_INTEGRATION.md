@@ -36,12 +36,20 @@ For the full endpoint/method/role table, see `API_ENDPOINT_CATALOG.md`.
 
 Response:
 ```json
-{ "refresh": "...", "access": "..." }
+{
+  "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "role": "ADMIN",
+  "email": "admin@concours.local",
+  "user_id": 1
+}
 ```
 
 - Access token: 8h lifetime
 - Refresh token: 24h lifetime
 - 3 failed attempts → 15min account lockout
+- **New:** The response body now includes `role`, `email`, and `user_id` so the frontend can perform RBAC routing immediately without calling `/api/auth/me/` first.
+- **New:** The JWT access token payload itself also contains `"role"`, enabling client-side decoding for route guards or menu filtering.
 
 ### 3.2 Use Access Token
 
@@ -72,6 +80,8 @@ Blacklists the refresh token.
 ### 3.5 Current User
 
 `GET /api/auth/me/` → `{id, email, first_name, last_name, role}`
+
+> **Note:** You can skip this call immediately after login because the `role`, `email`, and `user_id` are already returned in the login response. Use `/me/` only when you need `first_name`/`last_name` or when refreshing the page and reading the token from localStorage.
 
 ### 3.6 Invite User (Admin only)
 

@@ -23,13 +23,44 @@ Manages user accounts, JWT authentication, invite-based onboarding, RBAC, and ac
 
 | Endpoint | Method | Access | Description |
 |---|---|---|---|
-| `/api/auth/login/` | POST | Public | JWT login (8h access, 24h refresh) |
+| `/api/auth/login/` | POST | Public | JWT login (8h access, 24h refresh). Response now includes `role`, `email`, and `user_id` for instant frontend RBAC. |
 | `/api/auth/refresh/` | POST | Public | Refresh access token |
 | `/api/auth/logout/` | POST | Authenticated | Blacklist refresh token |
 | `/api/auth/me/` | GET | Authenticated | Current user profile |
 | `/api/auth/invites/` | POST | ADMIN | Invite a new user with a specified role |
 | `/api/auth/set-password/` | POST | Public (valid token) | Set password from invite link |
 | `/api/auth/users/` | GET/PATCH | ADMIN | List/update user accounts |
+
+## Login Response Shape
+
+```json
+{
+  "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "role": "ADMIN",
+  "email": "admin@esi-sba.dz",
+  "user_id": 1
+}
+```
+
+The `role` field allows the frontend to perform route-guard and menu-filtering **immediately after login**, without an extra round-trip to `/api/auth/me/`.
+
+## JWT Token Payload
+
+The `access` token payload now contains the user's `role`:
+
+```json
+{
+  "token_type": "access",
+  "exp": 1779755795,
+  "iat": 1779726995,
+  "jti": "...",
+  "user_id": "1",
+  "role": "ADMIN"
+}
+```
+
+This enables **client-side RBAC** (e.g. React route guards) by decoding the JWT base64 payload locally. Note: if a role is changed server-side, the token still carries the old role until expiry (8h). The frontend should re-fetch `/api/auth/me/` periodically or on 403 errors.
 
 ## Audit Events
 

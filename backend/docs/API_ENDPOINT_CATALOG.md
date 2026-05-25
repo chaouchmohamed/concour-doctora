@@ -16,7 +16,7 @@ Complete endpoint map for frontend integration. Current as of 2026-04-13.
 
 | Endpoint | Method | Access | SRS Ref | Description |
 |---|---|---|---|---|
-| `/api/auth/login/` | POST | Public | AUTH-01 | JWT login → `{access, refresh}` |
+| `/api/auth/login/` | POST | Public | AUTH-01 | JWT login → `{access, refresh, role, email, user_id}` |
 | `/api/auth/refresh/` | POST | Public | AUTH-01 | Refresh access token |
 | `/api/auth/logout/` | POST | Authenticated | AUTH-02 | Blacklist refresh token |
 | `/api/auth/me/` | GET | Authenticated | — | Current user profile |
