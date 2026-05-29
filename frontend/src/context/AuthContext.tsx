@@ -8,7 +8,7 @@ interface AuthContextValue {
     user: AuthUser | null;
     isAuthenticated: boolean;
     isLoading: boolean;
-    login: (username: string, password: string) => Promise<void>;
+    login: (email: string, password: string) => Promise<void>;
     logout: () => Promise<void>;
     changePassword: (newPassword: string, currentPassword?: string) => Promise<void>;
     refreshUser: () => Promise<void>;
@@ -27,6 +27,17 @@ export const useAuth = (): AuthContextValue => {
 // ---------------------------------------------------------------------------
 const getAccess = () => localStorage.getItem('access_token');
 const getRefresh = () => localStorage.getItem('refresh_token');
+const USER_ROLE_STORAGE_KEY = 'user_role';
+
+const saveUserRole = (user: AuthUser | null) => {
+    const role = (user as any)?.profile?.role || (user as any)?.role;
+    if (role) {
+        localStorage.setItem(USER_ROLE_STORAGE_KEY, role);
+    } else {
+        localStorage.removeItem(USER_ROLE_STORAGE_KEY);
+    }
+};
+
 const setTokens = (access: string, refresh: string) => {
     localStorage.setItem('access_token', access);
     localStorage.setItem('refresh_token', refresh);
@@ -82,10 +93,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 const data: AuthUser = await res.json();
                 setUser(data);
                 localStorage.setItem('auth_user', JSON.stringify(data));
+                saveUserRole(data);
             } else if (res.status === 401 || res.status === 403) {
                 // Only clear if explicitly unauthorized
                 clearTokens();
                 localStorage.removeItem('auth_user');
+                localStorage.removeItem(USER_ROLE_STORAGE_KEY);
                 setUser(null);
             }
         } catch (err) {
@@ -114,6 +127,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (storedUser) {
             setUser(JSON.parse(storedUser));
         }
+        // Basic sanity check for API_BASE. If environment provided a bare hostname
+        // (e.g. "localhost") without protocol, network requests will fail.
+        if (typeof API_BASE === 'string' && !/^https?:\/\//.test(API_BASE) && !API_BASE.startsWith('/')) {
+            // eslint-disable-next-line no-console
+            console.warn('API_BASE may be misconfigured:', API_BASE);
+        }
 
         if (getAccess()) {
             fetchMe();
@@ -123,24 +142,47 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }, [fetchMe]);
 
 
-    const login = useCallback(async (username: string, password: string) => {
-        const res = await fetch(`${API_BASE}/auth/login/`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password }),
-        });
+    const login = useCallback(async (email: string, password: string) => {
+        let res: Response;
+        try {
+            res = await fetch(`${API_BASE}/auth/login/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            });
+        } catch (networkErr) {
+            throw new Error('Network error while contacting authentication server');
+        }
 
         if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            throw new Error(err.error || 'Invalid credentials');
+            // Try to extract common error shapes from backend
+            const body = await res.json().catch(() => null);
+            const message =
+                (body && (body.detail || body.error || body.message)) ||
+                (body && body.non_field_errors && body.non_field_errors[0]) ||
+                `Login failed (${res.status})`;
+
+            throw new Error(message);
         }
 
         const data = await res.json();
+        if (!data?.access || !data?.refresh) {
+            throw new Error('Authentication succeeded but no tokens received from server');
+        }
+
         setTokens(data.access, data.refresh);
-        const userData = data.user as AuthUser;
-        setUser(userData);
-        localStorage.setItem('auth_user', JSON.stringify(userData));
-    }, []);
+
+        // Some backends return the user on login; if present, store it.
+        if (data.user) {
+            const userData = data.user as AuthUser;
+            setUser(userData);
+            localStorage.setItem('auth_user', JSON.stringify(userData));
+            saveUserRole(userData);
+        }
+
+        // Hydrate user/profile from /auth/me now that tokens are stored
+        await fetchMe();
+    }, [fetchMe]);
 
 
     /**
@@ -189,6 +231,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } finally {
             clearTokens();
             localStorage.removeItem('auth_user');
+            localStorage.removeItem(USER_ROLE_STORAGE_KEY);
             setUser(null);
         }
     }, []);

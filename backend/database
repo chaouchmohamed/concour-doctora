@@ -1,4 +1,0 @@
-CREATE DATABASE concour_doctora CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'concour_user'@'localhost' IDENTIFIED BY 'strong-password';
-GRANT ALL PRIVILEGES ON concour_doctora.* TO 'concour_user'@'localhost';
-FLUSH PRIVILEGES;

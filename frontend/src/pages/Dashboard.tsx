@@ -26,8 +26,19 @@ import { Card } from "../components/UI";
 import { motion } from "motion/react";
 import { cn } from "../constants";
 import { useAuth } from "../context/AuthContext";
+import { useSession } from "../context/SessionContext";
 import { UserRole } from "../types";
 import { api, DashboardStats } from "../lib/api";
+
+const USER_ROLE_STORAGE_KEY = "user_role";
+
+const getStoredRole = (): UserRole | undefined => {
+  const storedRole = localStorage.getItem(USER_ROLE_STORAGE_KEY);
+  if (storedRole && Object.values(UserRole).includes(storedRole as UserRole)) {
+    return storedRole as UserRole;
+  }
+  return undefined;
+};
 
 // ─── Shared primitives ────────────────────────────────────────────────────────
 
@@ -918,22 +929,24 @@ const AnonymityDashboard = ({ name, stats }: { name: string; stats: DashboardSta
 // ─── Main export ──────────────────────────────────────────────────────────────
 export const Dashboard = () => {
   const { user } = useAuth();
-  const userRole = user?.profile?.role as UserRole | undefined;
+  const { selectedSession } = useSession();
+  const userRole = user?.profile?.role || getStoredRole();
   const fullName = user?.full_name || user?.username || "User";
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setLoading(true);
     api.dashboard.stats()
       .then(setStats)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [selectedSession?.id]);
 
   if (loading) {
     return (
       <AppShell title="Overview">
-        <div className="h-full flex items-center justify-center">
+        <div className="h-full min-h-0 overflow-y-auto flex items-center justify-center">
           <Loader2 className="animate-spin text-[#8B7355]" size={32} />
         </div>
       </AppShell>
@@ -963,5 +976,11 @@ export const Dashboard = () => {
     }
   };
 
-  return <AppShell title="Overview">{renderDashboard()}</AppShell>;
+  return (
+    <AppShell title="Overview">
+      <div className="h-full min-h-0 overflow-y-auto pr-1">
+        {renderDashboard()}
+      </div>
+    </AppShell>
+  );
 };

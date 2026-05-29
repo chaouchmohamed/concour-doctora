@@ -102,6 +102,7 @@ export const ExamPlanningPage = () => {
   const [roomStep, setRoomStep] = useState<1 | 2>(1);
   const [roomDone, setRoomDone] = useState(false);
   const [roomForm, setRoomForm] = useState({ ...blankRoom });
+  const [editRoomId, setEditRoomId] = useState<string | null>(null);
 
   const [editExam, setEditExam] = useState<Exam | null>(null);
   const [editForm, setEditForm] = useState<Partial<Exam>>({});
@@ -207,7 +208,15 @@ export const ExamPlanningPage = () => {
 
   // ── Add Room ──────────────────────────────────────────────────────────────
   const openAddRoom = () => {
+    setEditRoomId(null);
     setRoomForm({ ...blankRoom });
+    setRoomStep(1);
+    setRoomDone(false);
+    setShowAddRoom(true);
+  };
+  const openEditRoom = (r: Room) => {
+    setEditRoomId(r.id);
+    setRoomForm({ name: r.name, capacity: r.capacity, building: r.building });
     setRoomStep(1);
     setRoomDone(false);
     setShowAddRoom(true);
@@ -217,15 +226,19 @@ export const ExamPlanningPage = () => {
       setRoomStep(2);
       return;
     }
-    setRooms((p) => [
-      ...p,
-      {
-        id: `r${p.length + 1}`,
-        name: roomForm.name.toUpperCase(),
-        capacity: roomForm.capacity,
-        building: roomForm.building,
-      },
-    ]);
+    if (editRoomId) {
+      setRooms((p) => p.map(r => r.id === editRoomId ? { ...r, name: roomForm.name.toUpperCase(), capacity: roomForm.capacity, building: roomForm.building } : r));
+    } else {
+      setRooms((p) => [
+        ...p,
+        {
+          id: `r${p.length + 1}`,
+          name: roomForm.name.toUpperCase(),
+          capacity: roomForm.capacity,
+          building: roomForm.building,
+        },
+      ]);
+    }
     setRoomDone(true);
   };
 
@@ -426,7 +439,7 @@ export const ExamPlanningPage = () => {
                     <div
                       key={room.id}
                       className={cn(
-                        "p-3 rounded-lg border flex items-center justify-between",
+                        "p-3 rounded-lg border flex items-center justify-between group",
                         assigned
                           ? "bg-[#F0EDE7]/40 border-[#8B7355]/20"
                           : "bg-white border-[#EBEBEB]",
@@ -452,16 +465,39 @@ export const ExamPlanningPage = () => {
                           </p>
                         </div>
                       </div>
-                      <span
-                        className={cn(
-                          "text-[11px] font-bold px-2.5 py-1 rounded-md",
-                          assigned
-                            ? "bg-[#F0EDE7] text-[#8B7355]"
-                            : "bg-gray-100 text-gray-500",
-                        )}
-                      >
-                        {assigned ? "Assigned" : "Available"}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={cn(
+                            "text-[11px] font-bold px-2.5 py-1 rounded-md",
+                            assigned
+                              ? "bg-[#F0EDE7] text-[#8B7355]"
+                              : "bg-gray-100 text-gray-500",
+                          )}
+                        >
+                          {assigned ? "Assigned" : "Available"}
+                        </span>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => openEditRoom(room)}
+                            className="p-1.5 rounded hover:bg-[#F0EDE7] text-[#9B9B9B] hover:text-[#8B7355] transition-colors"
+                            title="Edit room"
+                          >
+                            <Edit2 size={13} />
+                          </button>
+                          <button
+                            onClick={() => !assigned && setRooms((p) => p.filter((r) => r.id !== room.id))}
+                            className={cn(
+                              "p-1.5 rounded transition-colors",
+                              assigned
+                                ? "text-gray-300 cursor-not-allowed"
+                                : "hover:bg-red-50 text-[#9B9B9B] hover:text-red-500"
+                            )}
+                            title={assigned ? "Cannot delete an assigned room" : "Delete room"}
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   );
                 })}
@@ -544,7 +580,7 @@ export const ExamPlanningPage = () => {
                       className={cn(
                         "relative flex flex-col items-center justify-center w-[130px] h-[120px] rounded-xl border-2 transition-all duration-300",
                         isSelected &&
-                          "bg-[#8B7355] border-[#8B7355] scale-110 shadow-xl",
+                        "bg-[#8B7355] border-[#8B7355] scale-110 shadow-xl",
                         isOther && "bg-[#FAFAFA] border-[#EBEBEB] opacity-50",
                         !isSelected && !isOther && "bg-white border-[#EBEBEB]",
                       )}
@@ -896,9 +932,9 @@ export const ExamPlanningPage = () => {
                 <div className="flex-1">
                   <h3 className="text-[16px] font-bold text-[#1A1A1A]">
                     {roomDone
-                      ? "Room Added!"
+                      ? editRoomId ? "Room Updated!" : "Room Added!"
                       : roomStep === 1
-                        ? "Add New Room"
+                        ? editRoomId ? "Edit Room" : "Add New Room"
                         : "Review Room"}
                   </h3>
                   <p className="text-[11px] text-[#9B9B9B]">
@@ -1029,7 +1065,7 @@ export const ExamPlanningPage = () => {
                         className="flex-1 py-2.5 rounded-lg bg-[#8B7355] text-white text-[13px] font-bold hover:bg-[#7a6348] transition-all flex items-center justify-center gap-2"
                       >
                         <Check size={14} />
-                        Add Room
+                        {editRoomId ? "Save Changes" : "Add Room"}
                       </button>
                     </div>
                   </motion.div>
@@ -1046,7 +1082,7 @@ export const ExamPlanningPage = () => {
                     </div>
                     <div>
                       <h4 className="text-[16px] font-bold text-[#1A1A1A] mb-1">
-                        Room "{roomForm.name.toUpperCase()}" added!
+                        Room "{roomForm.name.toUpperCase()}" {editRoomId ? "updated" : "added"}!
                       </h4>
                       <p className="text-[12px] text-[#9B9B9B]">
                         Now available for exam assignment.

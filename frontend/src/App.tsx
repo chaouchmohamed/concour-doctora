@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ROUTES } from './constants';
 import { AuthProvider } from './context/AuthContext';
+import { SessionProvider } from './context/SessionContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { UserRole } from './types';
 
@@ -21,13 +22,15 @@ import { UserManagementPage } from './pages/UserManagement';
 import { AuditTrailPage } from './pages/AuditTrail';
 import { SystemSettingsPage } from './pages/SystemSettings';
 import { NotFoundPage } from './pages/NotFound';
+import { CreateConcourPage } from './pages/CreateConcour';
 
 const { ADMIN, CFD_HEAD, COORDINATOR, CORRECTOR, SUPERVISOR, JURY_PRESIDENT, JURY_MEMBER, ANONYMITY_COMMISSION } = UserRole;
 
 export default function App() {
   return (
     <AuthProvider>
-      <Router>
+      <SessionProvider>
+        <Router>
         <Routes>
           {/* Public */}
           <Route path={ROUTES.HOME} element={<LandingPage />} />
@@ -47,6 +50,12 @@ export default function App() {
           <Route path={ROUTES.DASHBOARD} element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          } />
+
+          <Route path={ROUTES.CREATE_CONCOUR} element={
+            <ProtectedRoute allowedRoles={[ADMIN, CFD_HEAD]}>
+              <CreateConcourPage />
             </ProtectedRoute>
           } />
 
@@ -127,6 +136,7 @@ export default function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Router>
+      </SessionProvider>
     </AuthProvider>
   );
 }

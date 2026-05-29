@@ -314,12 +314,12 @@ export const api = {
 
   // ── Sessions ────────────────────────────────────────────────────────────────
   sessions: {
-    list: () => get<PaginatedResponse<ExamSession>>('/sessions/'),
-    create: (data: Partial<ExamSession>) => post<ExamSession>('/sessions/', data),
-    update: (id: number, data: Partial<ExamSession>) => patch<ExamSession>(`/sessions/${id}/`, data),
-    delete: (id: number) => del<void>(`/sessions/${id}/`),
-    activate: (id: number) => post<{ status: string }>(`/sessions/${id}/activate/`),
-    close: (id: number) => post<{ status: string }>(`/sessions/${id}/close/`),
+    list: () => get<PaginatedResponse<ExamSession>>('/examinations/sessions/'),
+    create: (data: Partial<ExamSession>) => post<ExamSession>('/examinations/sessions/', data),
+    update: (id: number, data: Partial<ExamSession>) => patch<ExamSession>(`/examinations/sessions/${id}/`, data),
+    delete: (id: number) => del<void>(`/examinations/sessions/${id}/`),
+    activate: (id: number) => post<{ status: string }>(`/examinations/sessions/${id}/activate/`),
+    close: (id: number) => post<{ status: string }>(`/examinations/sessions/${id}/close/`),
   },
 
   // ── Subjects ────────────────────────────────────────────────────────────────

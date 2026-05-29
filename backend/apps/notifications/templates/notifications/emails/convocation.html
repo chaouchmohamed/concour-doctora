@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: sans-serif; color: #333; line-height: 1.6; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; border: 1px solid #ddd; padding: 20px; border-radius: 8px; }
+        h1 { color: #0056b3; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #f8f9fa; }
+        .footer { margin-top: 30px; font-size: 0.9em; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Convocation au Concours de Doctorat</h1>
+        <p>Bonjour <strong>{{ candidate_name }}</strong>,</p>
+        <p>Vous êtes officiellement convoqué(e) aux épreuves écrites du concours de doctorat. Voici le détail de votre planning :</p>
+        
+        {% if schedules %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Épreuve</th>
+                    <th>Date</th>
+                    <th>Heure</th>
+                    <th>Salle</th>
+                    <th>Durée</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for schedule in schedules %}
+                <tr>
+                    <td>{{ schedule.subject_name }}</td>
+                    <td>{{ schedule.date }}</td>
+                    <td>{{ schedule.time }}</td>
+                    <td>{{ schedule.room }}</td>
+                    <td>{{ schedule.duration }} min</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p><em>Le planning des épreuves n'a pas encore été finalisé. Vous recevrez une notification prochainement.</em></p>
+        {% endif %}
+
+        <p><strong>Rappel important :</strong> Veuillez vous présenter au moins 30 minutes avant le début de la première épreuve, muni(e) d'une pièce d'identité valide et de cette convocation.</p>
+
+        <div class="footer">
+            <p>Cordialement,<br>La Commission de Formation Doctorale</p>
+        </div>
+    </div>
+</body>
+</html>
