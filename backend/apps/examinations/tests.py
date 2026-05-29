@@ -189,6 +189,37 @@ class CallListTests(_BaseExaminationTest):
         self.assertIn("application_number", response.data[0])
         self.assertIn("full_name", response.data[0])
         self.assertEqual(response.data[0]["room"], "Salle A")
+        self.assertIn("attendance_status", response.data[0])
+        self.assertIsNone(response.data[0]["attendance_status"])  # not marked yet
+
+    def test_call_list_reflects_attendance_status(self):
+        from apps.attendance.models import AttendanceSubmission, AttendanceRecord, AttendanceStatus
+
+        for i, c in enumerate(self.candidates[:3], start=1):
+            ExamAllocation.objects.create(
+                candidate=c, subject_schedule=self.schedule1, seat_number=i
+            )
+
+        submission = AttendanceSubmission.objects.create(
+            exam_schedule=self.schedule1, submitted_by=self.supervisor
+        )
+        # candidate 1 = PRESENT, candidate 2 = ABSENT, candidate 3 = unmarked
+        AttendanceRecord.objects.create(
+            submission=submission, candidate=self.candidates[0], status=AttendanceStatus.PRESENT, marked_by=self.supervisor
+        )
+        AttendanceRecord.objects.create(
+            submission=submission, candidate=self.candidates[1], status=AttendanceStatus.ABSENT, marked_by=self.supervisor
+        )
+
+        url = f"/api/examinations/schedules/{self.schedule1.id}/call_list/"
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 3)
+
+        statuses = {item["application_number"]: item["attendance_status"] for item in response.data}
+        self.assertEqual(statuses["A-01"], "PRESENT")
+        self.assertEqual(statuses["A-02"], "ABSENT")
+        self.assertIsNone(statuses["A-03"])
 
     def test_call_list_consolidated_by_subject(self):
         for i, c in enumerate(self.candidates[:6], start=1):
@@ -205,6 +236,7 @@ class CallListTests(_BaseExaminationTest):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(len(response.data) >= 1)
         self.assertIn("candidates", response.data[0])
+        self.assertIn("attendance_status", response.data[0]["candidates"][0])
 
     def test_supervisor_can_read_call_list(self):
         self.client.force_authenticate(user=self.supervisor)

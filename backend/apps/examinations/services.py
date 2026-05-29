@@ -91,11 +91,30 @@ def auto_allocate_candidates(schedule: SubjectSchedule, user) -> dict:
 
 
 def generate_call_list(schedule: SubjectSchedule) -> list[dict]:
+    from django.apps import apps
+
+    AttendanceSubmission = apps.get_model("attendance", "AttendanceSubmission")
+    AttendanceRecord = apps.get_model("attendance", "AttendanceRecord")
+
     allocations = (
         ExamAllocation.objects.filter(subject_schedule=schedule)
         .select_related("candidate")
         .order_by("seat_number")
     )
+
+    # Pull the latest attendance submission (if any) for this schedule
+    submission = (
+        AttendanceSubmission.objects.filter(exam_schedule=schedule)
+        .order_by("-created_at")
+        .first()
+    )
+
+    record_statuses = {}
+    if submission:
+        record_statuses = {
+            rec.candidate_id: rec.status
+            for rec in AttendanceRecord.objects.filter(submission=submission)
+        }
 
     return [
         {
@@ -103,6 +122,7 @@ def generate_call_list(schedule: SubjectSchedule) -> list[dict]:
             "application_number": a.candidate.application_number,
             "full_name": f"{a.candidate.last_name} {a.candidate.first_name}",
             "room": schedule.room.name,
+            "attendance_status": record_statuses.get(a.candidate_id),
         }
         for a in allocations
     ]

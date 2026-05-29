@@ -86,6 +86,7 @@ class CallListEntrySerializer(serializers.Serializer):
     application_number = serializers.CharField()
     full_name = serializers.CharField()
     room = serializers.CharField()
+    attendance_status = serializers.CharField(allow_null=True, required=False)
 
 
 class CallListBlockSerializer(serializers.Serializer):
