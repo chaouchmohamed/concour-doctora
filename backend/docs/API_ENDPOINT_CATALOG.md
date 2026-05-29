@@ -55,11 +55,11 @@ Complete endpoint map for frontend integration. Current as of 2026-04-13.
 | `/api/examinations/sessions/{id}/record_subjects/` | POST | ADMIN, CFD_HEAD | PV-01 | Record subjects submitted → generate PV of Subject Creation |
 | `/api/examinations/sessions/{id}/lottery/` | POST | ADMIN, CFD_HEAD | EXAM-05 | Record lottery result (body: `{selected_subject_id}`) → generate PV of Subject Lottery |
 | `/api/examinations/subjects/` | CRUD | ADMIN write, 4 roles read | EXAM-01 | Manage subjects (with validation) |
-| `/api/examinations/subjects/{id}/call_list/` | GET | ADMIN, CFD_HEAD, COORD, SUPER | EXAM-03/04 | Consolidated call list per subject |
+| `/api/examinations/subjects/{id}/call_list/` | GET | ADMIN, CFD_HEAD, COORD, SUPER | EXAM-03/04 | Consolidated call list per subject (includes `attendance_status`) |
 | `/api/examinations/rooms/` | CRUD | ADMIN write, 4 roles read | — | Manage rooms |
 | `/api/examinations/schedules/` | CRUD | ADMIN write, 4 roles read | EXAM-02 | Manage schedules |
 | `/api/examinations/schedules/{id}/auto_allocate/` | POST | ADMIN | EXAM-02 | Randomly allocate candidates to rooms+seats |
-| `/api/examinations/schedules/{id}/call_list/` | GET | ADMIN, CFD_HEAD, COORD, SUPER | EXAM-03/04 | Per-room call list |
+| `/api/examinations/schedules/{id}/call_list/` | GET | ADMIN, CFD_HEAD, COORD, SUPER | EXAM-03/04 | Per-room call list (includes `attendance_status`: PRESENT, ABSENT, or null) |
 | `/api/examinations/allocations/` | GET | 4 roles read | — | View allocations (read-only) |
 
 ---

@@ -202,10 +202,31 @@ Skeleton endpoints exist. Full workflow pending.
 
 ```json
 [
-  { "seat_number": 1, "application_number": "A-01", "full_name": "Doe John", "room": "Salle A" },
-  { "seat_number": 2, "application_number": "A-02", "full_name": "Smith Jane", "room": "Salle A" }
+  {
+    "seat_number": 1,
+    "application_number": "A-01",
+    "full_name": "Doe John",
+    "room": "Salle A",
+    "attendance_status": "PRESENT"
+  },
+  {
+    "seat_number": 2,
+    "application_number": "A-02",
+    "full_name": "Smith Jane",
+    "room": "Salle A",
+    "attendance_status": "ABSENT"
+  },
+  {
+    "seat_number": 3,
+    "application_number": "A-03",
+    "full_name": "Brown Alex",
+    "room": "Salle A",
+    "attendance_status": null
+  }
 ]
 ```
+
+> **Note:** `attendance_status` reflects the latest mark for this candidate in the current schedule. It is `null` if the candidate has not been marked yet. This allows the Supervisor PWA to render the full roster with real-time status in a single request.
 
 ### Call List (consolidated per subject)
 
@@ -218,7 +239,9 @@ Skeleton endpoints exist. Full workflow pending.
     "start_time": "09:00:00",
     "room": "Salle A",
     "duration_minutes": 120,
-    "candidates": [ ... ]
+    "candidates": [
+      { "seat_number": 1, "application_number": "A-01", "full_name": "Doe John", "room": "Salle A", "attendance_status": "PRESENT" }
+    ]
   }
 ]
 ```
