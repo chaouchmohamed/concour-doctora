@@ -121,16 +121,47 @@ export const SupervisorPWA = () => {
         const active = sessRes.results.find(s => s.status === 'ACTIVE') ?? sessRes.results[0] ?? null;
         if (active) {
           setSessionInfo({ room: 'Exam Room', subject: active.name, year: String(active.year) });
-          if (!localStorage.getItem(STORAGE_KEY)) {
+
+          // Always fetch from API — clear stale cache if session changed
+          const cachedSessionKey = 'supervisor_session_id';
+          const cachedSessionId = localStorage.getItem(cachedSessionKey);
+          if (cachedSessionId !== String(active.id)) {
+            // New or different session — wipe old cache
+            localStorage.removeItem(STORAGE_KEY);
+            localStorage.setItem(cachedSessionKey, String(active.id));
+          }
+
+          try {
+            // Always load fresh from the API
             const candidates = await api.candidates.listAll(`exam_session=${active.id}`);
-            const mapped: Student[] = candidates.map((c, i) => ({
-              id: String(c.id),
-              seat: String(i + 1).padStart(2, '0'),
-              appNum: c.application_number,
-              name: c.full_name,
-              status: 'PENDING' as AttStatus,
-            }));
-            setStudents(mapped);
+            if (candidates.length > 0) {
+              // Merge with any locally-saved statuses (for offline edits)
+              const saved = loadStudents();
+              const savedMap = new Map(saved.map(s => [s.id, s]));
+              const mapped: Student[] = candidates.map((c, i) => {
+                const existing = savedMap.get(String(c.id));
+                return {
+                  id: String(c.id),
+                  seat: existing?.seat ?? String(i + 1).padStart(2, '0'),
+                  appNum: c.application_number,
+                  name: c.full_name,
+                  status: existing?.status ?? 'PENDING' as AttStatus,
+                  flagged: existing?.flagged,
+                  incident: existing?.incident,
+                  note: existing?.note,
+                };
+              });
+              setStudents(mapped);
+            } else {
+              // API returned 0 candidates — fall back to any cached data
+              const cached = loadStudents();
+              if (cached.length > 0) setStudents(cached);
+            }
+          } catch (apiErr) {
+            console.error('API fetch failed, using cache:', apiErr);
+            // Offline fallback: use whatever is in localStorage
+            const cached = loadStudents();
+            if (cached.length > 0) setStudents(cached);
           }
         }
       } catch (err) { console.error('Failed to load supervisor data:', err); }

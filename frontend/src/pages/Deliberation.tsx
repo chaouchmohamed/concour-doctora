@@ -25,6 +25,7 @@ import { Card } from "../components/UI";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../constants";
 import { api, DeliberationResult, ExamSession, OfficialResult } from "../lib/api";
+import { authFetch, API_BASE } from "../context/AuthContext";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -317,8 +318,24 @@ const PVModal = ({
     if (!session) return;
     setGenerating(true);
     try {
-      const pv = await api.pv.generate(session.id, `PV of Deliberation - ${session.name}`);
-      setDownloadUrl(pv.pdf_file);
+      // Find the deliberation run for this session first
+      const runRes = await authFetch(`${API_BASE}/deliberation/runs/`);
+      const runs = await runRes.json();
+      const run = runs.results?.find((r: any) => r.exam_session_id === session.id) || runs.results?.[0];
+      
+      if (!run) {
+        throw new Error("No deliberation run found for this session.");
+      }
+
+      const res = await api.deliberation.generatePV(run.id);
+
+      // Now fetch to download it or just open the document link
+      // Notice: generatePV returns something like { pv_document_id: 123 }
+      const docId = res.pv_document_id || res.id;
+      if (docId) {
+        setDownloadUrl(api.pv.downloadUrl(docId));
+      }
+      
       setGenerating(false);
       setDone(true);
     } catch (error) {

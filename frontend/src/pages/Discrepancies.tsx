@@ -287,7 +287,7 @@ const DetailDrawer = ({
 }: {
   disc: Discrepancy;
   onClose: () => void;
-  onValidate: (id: string, grade: number) => void;
+  onValidate: (id: string, grade: number, note: string) => void;
 }) => {
   const [manualGrade, setManualGrade] = useState("");
   const [justification, setJustification] = useState("");
@@ -304,7 +304,7 @@ const DetailDrawer = ({
     if (isNaN(g)) return;
     setSaving(true);
     setTimeout(() => {
-      onValidate(disc.id, g);
+      onValidate(disc.id, g, justification);
       setSaving(false);
       onClose();
     }, 900);
@@ -576,9 +576,9 @@ export const DiscrepanciesPage = () => {
     refresh();
   };
 
-  const handleValidate = async (id: string, grade: number) => {
+  const handleValidate = async (id: string, grade: number, note: string) => {
     try {
-      await api.discrepancies.resolve(Number(id), grade);
+      await api.discrepancies.resolve(Number(id), grade, note);
     } catch (e) { console.error(e); }
     refresh();
   };

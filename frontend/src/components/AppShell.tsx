@@ -152,11 +152,6 @@ const SessionDropdown = () => {
   }, []);
 
   useEffect(() => {
-    // Only fetch when dropdown opens and we haven't already loaded sessions
-    if (!isOpen) {
-      return;
-    }
-
     // Skip if already loading or have sessions
     if (sessions.length > 0 || loading) {
       return;
@@ -526,10 +521,12 @@ export const AppShell = ({
           </div>
 
           <div className="flex items-center gap-2 lg:gap-4">
-            <Link to={ROUTES.CREATE_CONCOUR} className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-[#8B7355] text-white rounded-xl hover:bg-[#7A6548] transition-all font-bold text-[12px] shadow-sm shadow-[#8B7355]/20 active:scale-95">
-              <Plus size={14} strokeWidth={3} />
-              Create Concour
-            </Link>
+            {userRole === ADMIN && (
+              <Link to={ROUTES.CREATE_CONCOUR} className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-[#8B7355] text-white rounded-xl hover:bg-[#7A6548] transition-all font-bold text-[12px] shadow-sm shadow-[#8B7355]/20 active:scale-95">
+                <Plus size={14} strokeWidth={3} />
+                Create Concour
+              </Link>
+            )}
             <SessionDropdown />
 
             <div className="h-8 w-px bg-border mx-1" />

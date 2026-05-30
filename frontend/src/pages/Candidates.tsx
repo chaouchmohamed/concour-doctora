@@ -571,7 +571,11 @@ export const CandidatesPage = () => {
             <div className="space-y-4">
               <p className="text-[13px] text-[#555]">Send convocation to <span className="font-bold">{selectedIds.length}</span> candidate(s).</p>
               <div className="flex gap-2">
-                <button onClick={()=>{setShowConvoc(false);setSelectedIds([]);}} className="flex-1 py-2.5 rounded-lg bg-[#8B7355] text-white text-[13px] font-bold hover:bg-[#7a6348] transition-all flex items-center justify-center gap-2"><Mail size={14}/> Send Now</button>
+                <button onClick={()=>{
+                  api.notifications.dispatchConvocations(selectedIds.map(Number)).catch(console.error);
+                  setShowConvoc(false);
+                  setSelectedIds([]);
+                }} className="flex-1 py-2.5 rounded-lg bg-[#8B7355] text-white text-[13px] font-bold hover:bg-[#7a6348] transition-all flex items-center justify-center gap-2"><Mail size={14}/> Send Now</button>
                 <button onClick={()=>setShowConvoc(false)} className="flex-1 py-2.5 rounded-lg border border-[#EBEBEB] text-[#555] text-[13px] font-semibold hover:bg-[#F5F5F5] transition-all">Cancel</button>
               </div>
             </div>

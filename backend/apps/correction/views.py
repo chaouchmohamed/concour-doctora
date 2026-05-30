@@ -29,6 +29,7 @@ from .serializers import (
     GradeDiscrepancySerializer,
     LockSubjectGradesSerializer,
     SubjectGradeLockSerializer,
+    ResolveDiscrepancySerializer,
 )
 from .services import (
     assign_correctors,
@@ -40,6 +41,7 @@ from .services import (
     get_corrector_copies,
     lock_subject_grades,
     submit_grade,
+    resolve_discrepancy,
 )
 
 
@@ -220,6 +222,38 @@ class GradeDiscrepancyViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(
             {"detail": "Third corrector assigned.", "assignment_id": assignment.id},
             status=status.HTTP_201_CREATED,
+        )
+
+    @extend_schema(
+        summary="Resolve a discrepancy manually",
+        description="Coordinator resolves a discrepancy without a third corrector by setting a final grade.",
+        request=ResolveDiscrepancySerializer,
+        responses={200: None},
+    )
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="resolve",
+        permission_classes=[IsAuthenticated, CoordinatorOrAdminPermission],
+    )
+    def resolve(self, request, pk=None):
+        discrepancy = self.get_object()
+        serializer = ResolveDiscrepancySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            resolve_discrepancy(
+                discrepancy_id=discrepancy.pk,
+                final_grade=serializer.validated_data["final_grade"],
+                user=request.user,
+                note=serializer.validated_data.get("coordinator_note", ""),
+            )
+        except ValidationError as e:
+            return Response(e.detail, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(
+            {"detail": "Discrepancy resolved."},
+            status=status.HTTP_200_OK,
         )
 
 

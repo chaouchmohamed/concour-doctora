@@ -135,3 +135,8 @@ class LockSubjectGradesSerializer(serializers.Serializer):
 
 class GenerateCorrectionPVSerializer(serializers.Serializer):
     subject_id = serializers.IntegerField()
+
+
+class ResolveDiscrepancySerializer(serializers.Serializer):
+    final_grade = serializers.DecimalField(max_digits=5, decimal_places=2)
+    coordinator_note = serializers.CharField(required=False, allow_blank=True)

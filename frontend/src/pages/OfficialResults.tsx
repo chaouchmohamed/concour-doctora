@@ -19,7 +19,7 @@ import { Card } from "../components/UI";
 import { cn } from "../constants";
 import { motion, AnimatePresence } from "motion/react";
 import { api, OfficialResult as ApiResult, ExamSession } from "../lib/api";
-import { authFetch } from "../context/AuthContext";
+import { authFetch, API_BASE } from "../context/AuthContext";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -76,8 +76,18 @@ const PVModal = ({
     if (!session) return;
     setLoading(true);
     try {
-      const pv = await api.pv.generate(session.id, `PV of Deliberation - ${session.name}`);
-      const res = await authFetch(api.pv.downloadUrl(pv.id));
+      const runRes = await authFetch(`${API_BASE}/deliberation/runs/`);
+      const runs = await runRes.json();
+      const run = runs.results?.find((r: any) => r.exam_session_id === session.id) || runs.results?.[0];
+      
+      if (!run) {
+        throw new Error("No deliberation run found for this session.");
+      }
+
+      const pv = await api.deliberation.generatePV(run.id);
+      const docId = pv.pv_document_id || pv.id;
+      
+      const res = await authFetch(api.pv.downloadUrl(docId));
       if (!res.ok) {
         throw new Error(`Failed to download PV (${res.status})`);
       }
